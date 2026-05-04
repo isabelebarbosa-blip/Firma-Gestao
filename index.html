@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Firma Produções — Gestão Operacional</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bk:#0A0A0A;--bk2:#141414;--bk3:#1E1E1E;--bk4:#2A2A2A;
+  --wh:#F5F5F5;--wh2:#DEDEDE;--wh3:#8A8A8A;
+  --red:#E8271A;--red-d:rgba(232,39,26,.18);--red-b:rgba(232,39,26,.4);
+  --br:rgba(255,255,255,.07);--br2:rgba(255,255,255,.13);
+  --green:#4CAF50;--gbg:rgba(76,175,80,.12);
+  --amber:#F59E0B;--abg:rgba(245,158,11,.12);
+  --blue:#60A5FA;--bbg:rgba(96,165,250,.12);
+  --r:8px;--rl:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bk);color:var(--wh);font-size:14px;min-height:100vh}
+
+/* LOGIN */
+#ls{min-height:100vh;display:flex;overflow:hidden}
+.ll{flex:1;display:flex;align-items:center;justify-content:center;padding:3rem;position:relative;z-index:2}
+.ll::before{content:'';position:absolute;inset:0;background-image:linear-gradient(var(--br) 1px,transparent 1px),linear-gradient(90deg,var(--br) 1px,transparent 1px);background-size:48px 48px}
+.ll::after{content:'';position:absolute;top:-20%;left:-10%;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(232,39,26,.07) 0%,transparent 70%)}
+.lr{width:420px;flex-shrink:0;background:var(--bk2);border-left:.5px solid var(--br2);display:flex;align-items:center;justify-content:center;padding:2.5rem}
+.bh{position:relative;z-index:1}
+.bw{font-family:'Syne',sans-serif;font-weight:800;font-size:76px;letter-spacing:-4px;line-height:1}
+.bw span{color:var(--red)}
+.bt2{font-size:12px;color:var(--wh3);letter-spacing:3px;text-transform:uppercase;margin-top:10px}
+.brl{width:36px;height:3px;background:var(--red);margin:18px 0}
+.bd{font-size:13px;color:var(--wh3);line-height:1.7;max-width:380px}
+.lb{width:100%}
+.lt{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:4px}
+.ls2{font-size:12px;color:var(--wh3);margin-bottom:1.8rem}
+.lf{margin-bottom:14px}
+.lf label{display:block;font-size:10px;font-weight:600;color:var(--wh3);letter-spacing:.6px;text-transform:uppercase;margin-bottom:6px}
+.lf input{width:100%;padding:11px 14px;border:.5px solid var(--br2);border-radius:var(--r);background:var(--bk3);font-size:14px;font-family:inherit;color:var(--wh);transition:border-color .15s}
+.lf input:focus{outline:none;border-color:var(--red)}
+.lbtn{width:100%;padding:12px;background:var(--red);color:#fff;border:none;border-radius:var(--r);font-size:14px;font-weight:600;font-family:'Syne',sans-serif;cursor:pointer;letter-spacing:.5px;transition:all .15s;margin-top:8px}
+.lbtn:hover{background:#c41e13;transform:translateY(-1px)}
+.lerr{font-size:12px;color:var(--red);margin-top:10px;display:none;text-align:center}
+.lhint{font-size:11px;color:var(--wh3);margin-top:14px;text-align:center;border-top:.5px solid var(--br);padding-top:12px}
+.lhint code{font-family:'DM Mono',monospace;background:var(--bk3);padding:1px 6px;border-radius:4px;color:var(--wh2)}
+@media(max-width:700px){.ll{display:none}.lr{width:100%;border:none}}
+
+/* APP */
+#app{display:none}
+.tb{background:var(--bk2);border-bottom:.5px solid var(--br2);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:50}
+.tbl{display:flex;align-items:center;gap:10px}
+.tlog{font-family:'Syne',sans-serif;font-weight:800;font-size:18px;letter-spacing:-.5px}
+.tlog span{color:var(--red)}
+.tdiv{width:1px;height:18px;background:var(--br2)}
+.tmod{font-size:11px;color:var(--wh3);letter-spacing:1px;text-transform:uppercase}
+.tbr{display:flex;align-items:center;gap:10px}
+.npill{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500}
+.np-ok{background:rgba(76,175,80,.15);color:#4CAF50}
+.np-off{background:var(--bk3);color:var(--wh3)}
+.np-err{background:var(--abg);color:var(--amber)}
+.upill{display:flex;align-items:center;gap:6px;padding:5px 10px;background:var(--bk3);border-radius:20px;font-size:12px}
+.uav{width:20px;height:20px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;font-family:'Syne',sans-serif;color:#fff}
+.obtn{padding:5px 12px;border:.5px solid var(--br2);border-radius:20px;background:none;font-size:12px;font-family:inherit;cursor:pointer;color:var(--wh3);transition:all .15s}
+.obtn:hover{background:var(--bk3);color:var(--wh)}
+
+.layout{display:flex;min-height:calc(100vh - 54px)}
+.sb{width:200px;flex-shrink:0;background:var(--bk2);border-right:.5px solid var(--br);padding:1rem .75rem;position:sticky;top:54px;height:calc(100vh - 54px);overflow-y:auto}
+.ns{font-size:10px;font-weight:600;color:var(--wh3);text-transform:uppercase;letter-spacing:.7px;padding:0 8px;margin:14px 0 5px}
+.ns:first-child{margin-top:4px}
+.ni{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--r);cursor:pointer;font-size:13px;color:var(--wh3);transition:all .12s;margin-bottom:2px}
+.ni:hover{background:var(--bk3);color:var(--wh)}
+.ni.active{background:var(--bk4);color:var(--wh);font-weight:500}
+.nib{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px}
+
+.main{flex:1;padding:1.5rem;overflow-x:hidden;max-width:980px}
+.panel{display:none}.panel.active{display:block}
+.ph{margin-bottom:1.5rem}
+.pt{font-family:'Syne',sans-serif;font-size:20px;font-weight:700}
+.pst{font-size:12px;color:var(--wh3);margin-top:3px}
+
+/* METRICS */
+.mets{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:1.5rem}
+.met{background:var(--bk2);border:.5px solid var(--br);border-radius:var(--rl);padding:16px}
+.ml{font-size:10px;color:var(--wh3);margin-bottom:8px;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
+.mv{font-size:26px;font-weight:700;line-height:1;font-family:'Syne',sans-serif}
+.ms{font-size:11px;color:var(--wh3);margin-top:5px}
+.mv-w{color:var(--amber)}.mv-o{color:var(--green)}
+
+/* CARD */
+.card{background:var(--bk2);border:.5px solid var(--br);border-radius:var(--rl);overflow:hidden;margin-bottom:1.5rem}
+.ch{padding:12px 18px;border-bottom:.5px solid var(--br);display:flex;align-items:center;justify-content:space-between}
+.ct{font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--wh3)}
+.th{display:grid;padding:9px 18px;border-bottom:.5px solid var(--br);font-size:10px;font-weight:600;color:var(--wh3);text-transform:uppercase;letter-spacing:.5px}
+.tr{display:grid;padding:12px 18px;border-bottom:.5px solid var(--br);align-items:center;transition:background .1s}
+.tr:last-child{border-bottom:none}
+.tr:hover{background:var(--bk3)}
+.g6{grid-template-columns:2fr 1fr 1fr 1fr 1fr .8fr}
+.g5{grid-template-columns:1.5fr 1fr 1.5fr 1fr 1fr}
+.g4{grid-template-columns:2fr 1fr 1fr 1fr}
+.g3{grid-template-columns:2fr 1.5fr 1fr}
+.av{width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;font-family:'Syne',sans-serif}
+.cc{display:flex;align-items:center;gap:10px}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:600;letter-spacing:.3px;text-transform:uppercase}
+.b-r{background:rgba(232,39,26,.15);color:#F87171}
+.b-a{background:var(--abg);color:var(--amber)}
+.b-g{background:var(--gbg);color:var(--green)}
+.b-b{background:var(--bbg);color:var(--blue)}
+.b-x{background:var(--bk3);color:var(--wh3)}
+.b-p{background:rgba(167,139,250,.12);color:#A78BFA}
+.bar-bg{height:3px;background:var(--br2);border-radius:2px;overflow:hidden;margin-top:5px}
+.bar-f{height:100%;border-radius:2px}
+
+/* BTNS */
+.btn{padding:8px 14px;border-radius:var(--r);border:.5px solid var(--br2);background:var(--bk3);font-size:12px;font-family:inherit;color:var(--wh2);cursor:pointer;transition:all .12s}
+.btn:hover{background:var(--bk4)}
+.btn-p{background:var(--red);border-color:var(--red);color:#fff;font-family:'Syne',sans-serif;font-weight:600}
+.btn-p:hover{background:#c41e13}
+.btn-sm{padding:4px 10px;font-size:11px}
+
+/* IMPORT */
+.itabs{display:flex;border-bottom:.5px solid var(--br);margin-bottom:1.5rem}
+.itab{padding:10px 18px;font-size:13px;cursor:pointer;border:none;background:none;color:var(--wh3);border-bottom:2px solid transparent;margin-bottom:-.5px;transition:all .15s;font-family:inherit}
+.itab:hover{color:var(--wh)}
+.itab.active{color:var(--wh);border-bottom-color:var(--red);font-weight:500}
+.ipan{display:none}.ipan.active{display:block}
+.upz{border:1.5px dashed var(--br2);border-radius:var(--rl);padding:3rem 2rem;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:1.5rem;background:var(--bk2)}
+.upz:hover{border-color:var(--red);background:var(--bk3)}
+
+/* FOLGAS */
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:1.5rem}
+.fc{background:var(--bk2);border:.5px solid var(--red-b);border-radius:var(--rl);padding:16px}
+.fd{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:.5px solid var(--br);font-size:12px}
+.fd:last-of-type{border-bottom:none;margin-bottom:10px}
+
+/* HIST */
+.hi{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;background:var(--bk2);border:.5px solid var(--br);border-radius:var(--r);margin-bottom:6px;font-size:13px}
+.hic{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}
+.hw{background:var(--bbg)}.hf{background:var(--gbg)}.he{background:rgba(167,139,250,.12)}
+.hii{flex:1}
+.hit{font-weight:500;margin-bottom:2px}
+.him{font-size:11px;color:var(--wh3)}
+.dp{background:var(--bbg);color:var(--blue);font-size:11px;font-weight:500;padding:2px 8px;border-radius:4px;white-space:nowrap;font-family:'DM Mono',monospace}
+.dn{background:rgba(232,39,26,.12);color:#F87171;font-size:11px;font-weight:500;padding:2px 8px;border-radius:4px;white-space:nowrap;font-family:'DM Mono',monospace}
+.dz{background:var(--bk3);color:var(--wh3);font-size:11px;padding:2px 8px;border-radius:4px;white-space:nowrap;font-family:'DM Mono',monospace}
+
+/* CAL */
+.cal-hdr{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:5px}
+.cal-dn{text-align:center;font-size:10px;color:var(--wh3);font-weight:500}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cc2{border-radius:6px;padding:4px;text-align:center;font-size:11px;border:.5px solid transparent}
+.cc2n{font-weight:600;font-size:12px}
+.cc2d{width:4px;height:4px;border-radius:50%;margin:2px auto 0}
+.c-e{background:var(--bk3)}.c-h{background:rgba(232,39,26,.1);border-color:rgba(232,39,26,.25)}.c-t{outline:1.5px solid var(--red);outline-offset:1px}
+
+/* CFG */
+.cfg{background:var(--bk2);border:.5px solid var(--br);border-radius:var(--rl);padding:1.5rem;margin-bottom:1.2rem}
+.cgt{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:14px}
+.cf label{display:block;font-size:10px;font-weight:600;color:var(--wh3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px}
+.cf input{width:100%;padding:9px 11px;border:.5px solid var(--br2);border-radius:var(--r);background:var(--bk3);font-size:13px;font-family:inherit;color:var(--wh)}
+.cf input:focus{outline:none;border-color:var(--red)}
+.cfh{font-size:11px;color:var(--wh3);margin-top:5px;line-height:1.5}
+.ur{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:center;margin-bottom:8px}
+.ur input{padding:7px 10px;border:.5px solid var(--br2);border-radius:var(--r);font-size:12px;font-family:inherit;background:var(--bk3);color:var(--wh)}
+.ninfo{display:flex;gap:8px;background:var(--bbg);border:.5px solid rgba(96,165,250,.2);border-radius:var(--r);padding:12px 14px;font-size:12px;color:var(--blue);margin-top:12px;line-height:1.6}
+.ninfo code{font-family:'DM Mono',monospace;background:rgba(255,255,255,.06);padding:1px 5px;border-radius:3px}
+
+/* MODAL */
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center}
+.ov.open{display:flex}
+.modal{background:var(--bk2);border:.5px solid var(--br2);border-radius:var(--rl);padding:1.8rem;width:390px;max-width:95vw}
+.mt2{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:6px}
+.ms2{font-size:13px;color:var(--wh3);margin-bottom:1.4rem;line-height:1.6;white-space:pre-line}
+.ma{display:flex;gap:8px}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--bk2);border:.5px solid var(--br2);color:var(--wh);border-radius:var(--r);padding:10px 16px;font-size:13px;opacity:0;transform:translateY(8px);transition:all .25s;z-index:200;max-width:320px;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+.toast.show{opacity:1;transform:translateY(0)}
+.loader{display:flex;align-items:center;gap:8px;padding:1.5rem 1rem;font-size:13px;color:var(--wh3)}
+.spin{width:16px;height:16px;border:2px solid var(--br2);border-top-color:var(--wh3);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:2.5rem 1rem;color:var(--wh3);font-size:13px}
+@media(max-width:700px){.sb{display:none}.main{padding:1rem .75rem}.g6{grid-template-columns:2fr 1fr 1fr}.g6 .hide{display:none}}
+</style>
+</head>
+<body>
+
+<div id="ls">
+  <div class="ll">
+    <div class="bh">
+      <div class="bw">FIRMA<span>.</span></div>
+      <div class="bt2">Produções &amp; Eventos</div>
+      <div class="brl"></div>
+      <div class="bd">Sistema de gestão operacional — banco de horas, folgas e time.</div>
+    </div>
+  </div>
+  <div class="lr">
+    <div class="lb">
+      <div class="lt">Acesso ao sistema</div>
+      <div class="ls2">Insira suas credenciais para continuar</div>
+      <div class="lf"><label>Usuário</label><input type="text" id="l-u" autocomplete="username" placeholder="seu.usuario"></div>
+      <div class="lf"><label>Senha</label><input type="password" id="l-p" autocomplete="current-password" placeholder="••••••••"></div>
+      <button class="lbtn" onclick="doLogin()">Entrar</button>
+      <div class="lerr" id="lerr">Usuário ou senha incorretos</div>
+      <div class="lhint">Padrão: <code>admin</code> / <code>admin123</code></div>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="tb">
+    <div class="tbl">
+      <div class="tlog">FIRMA<span>.</span></div>
+      <div class="tdiv"></div>
+      <div class="tmod">Gestão Operacional</div>
+    </div>
+    <div class="tbr">
+      <span class="npill np-off" id="n-st">● Notion</span>
+      <div class="upill"><div class="uav" id="u-av">A</div><span id="u-lb">—</span></div>
+      <button class="obtn" onclick="doLogout()">Sair</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <nav class="sb">
+      <div class="ns">Principal</div>
+      <div class="ni active" onclick="gp('painel',this)"><span>📊</span>Painel</div>
+      <div class="ni" onclick="gp('eventos',this)"><span>📡</span>Eventos</div>
+      <div class="ns">Horas</div>
+      <div class="ni" onclick="gp('importar',this)"><span>📋</span>Importar</div>
+      <div class="ni" onclick="gp('folgas',this)"><span>🌴</span>Folgas <span class="nib" id="badge-f">0</span></div>
+      <div class="ni" onclick="gp('historico',this)"><span>📜</span>Histórico</div>
+      <div class="ns">Sistema</div>
+      <div class="ni" onclick="gp('config',this)"><span>⚙️</span>Configurações</div>
+    </nav>
+
+    <main class="main">
+      <div id="pp-painel" class="panel active">
+        <div class="ph"><div class="pt">Painel operacional</div><div class="pst" id="psub">—</div></div>
+        <div class="mets">
+          <div class="met"><div class="ml">Colaboradores</div><div class="mv" id="m-tot">—</div><div class="ms">com horas lançadas</div></div>
+          <div class="met"><div class="ml">Precisam folgar</div><div class="mv mv-w" id="m-prec">—</div><div class="ms">≥ limite configurado</div></div>
+          <div class="met"><div class="ml">Banco total</div><div class="mv" id="m-banco">—</div><div class="ms">horas acumuladas</div></div>
+          <div class="met"><div class="ml">Próximo evento</div><div class="mv mv-o" id="m-prox" style="font-size:16px">—</div><div class="ms" id="m-prox-n">—</div></div>
+        </div>
+        <div class="card">
+          <div class="ch">
+            <span class="ct">Saldo por colaborador</span>
+            <div style="display:flex;gap:10px;font-size:10px;color:var(--wh3);align-items:center">
+              <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:var(--red);display:inline-block"></span>Urgente</span>
+              <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:var(--amber);display:inline-block"></span>Atenção</span>
+              <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:var(--green);display:inline-block"></span>Regular</span>
+            </div>
+          </div>
+          <div class="th g6"><div>Colaborador</div><div>Função</div><div>Saldo</div><div>Status</div><div class="hide">Últ. folga</div><div>Ação</div></div>
+          <div id="clist"><div class="empty">Nenhum dado. Importe uma planilha T&M para começar.</div></div>
+        </div>
+        <div class="card">
+          <div class="ch"><span class="ct">Carga operacional — próximos 35 dias</span></div>
+          <div style="padding:16px">
+            <div class="cal-hdr"><div class="cal-dn">Dom</div><div class="cal-dn">Seg</div><div class="cal-dn">Ter</div><div class="cal-dn">Qua</div><div class="cal-dn">Qui</div><div class="cal-dn">Sex</div><div class="cal-dn">Sáb</div></div>
+            <div class="cal-grid" id="cal"></div>
+            <div style="display:flex;gap:12px;font-size:10px;color:var(--wh3);margin-top:10px;align-items:center">
+              <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:rgba(232,39,26,.1);border:1px solid rgba(232,39,26,.3)"></span>Evento</span>
+              <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:var(--bk3)"></span>Livre</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="pp-eventos" class="panel">
+        <div class="ph" style="display:flex;align-items:flex-start;justify-content:space-between">
+          <div><div class="pt">Calendário de eventos</div><div class="pst">Fonte: Notion 📡 Eventos</div></div>
+          <button class="btn btn-sm" onclick="loadEventos()">↻ Atualizar</button>
+        </div>
+        <div class="card">
+          <div class="th g4"><div>Evento</div><div>Data</div><div>Status</div><div>Duração</div></div>
+          <div id="evlist"><div class="empty">Configure o token Notion em Configurações para carregar eventos.</div></div>
+        </div>
+      </div>
+
+      <div id="pp-importar" class="panel">
+        <div class="ph"><div class="pt">Importar planilhas</div><div class="pst">T&M e Lista de Equipe</div></div>
+        <div class="itabs">
+          <button class="itab active" onclick="sit('tm',this)">📋 Tempos & Movimentos</button>
+          <button class="itab" onclick="sit('eq',this)">👥 Lista de Equipe</button>
+        </div>
+
+        <div id="it-tm" class="ipan active">
+          <div class="upz" onclick="document.getElementById('f-tm').click()">
+            <div style="font-size:32px;margin-bottom:10px">📋</div>
+            <div style="font-size:15px;font-weight:500;margin-bottom:5px">Importar Tempos & Movimentos</div>
+            <div style="font-size:12px;color:var(--wh3)">Formato Firma: título na linha 1 · cabeçalho na linha 2 · colunas <strong>DATA · INFORM. · LOCAL · HORÁRIO · HORÁRIO FIM · ATIVIDADE · DURAÇÃO · OBS</strong></div>
+            <input type="file" id="f-tm" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleTM(this)">
+          </div>
+          <div class="card">
+            <div class="ch"><span class="ct">Formato esperado — igual ao T&M da Firma</span></div>
+            <div class="th" style="grid-template-columns:1fr 1fr 1fr 1fr 1fr 2fr 1fr 1fr"><div>DATA</div><div>INFORM.</div><div>LOCAL</div><div>HORÁRIO</div><div>HORÁRIO FIM</div><div>ATIVIDADE</div><div>DURAÇÃO</div><div>OBS</div></div>
+            <div class="tr" style="grid-template-columns:1fr 1fr 1fr 1fr 1fr 2fr 1fr 1fr;font-size:11px;color:var(--wh3)"><div>13/04</div><div>MONTAGEM</div><div>PLENÁRIA</div><div>07:30</div><div>22:00</div><div>Tempo previsto total</div><div>14:30</div><div>FIRMA</div></div>
+            <div style="padding:8px 18px;font-size:11px;color:var(--wh3);border-top:.5px solid var(--br)">Apenas linhas onde OBS contém <strong>FIRMA</strong> são contabilizadas. O sistema calcula a jornada real por dia (entrada mais cedo → saída mais tarde) e soma os dias.</div>
+          </div>
+          <div class="card" id="tm-prev" style="display:none">
+            <div class="ch" style="flex-wrap:wrap;gap:8px">
+              <span class="ct" id="tm-prev-t">Prévia do evento</span>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <span id="tm-prev-eq" style="font-size:11px;color:var(--wh3)">Importe a lista de equipe para distribuir as horas</span>
+                <button class="btn btn-p btn-sm" id="tm-confirmar" style="display:none" onclick="confirmTM()">Confirmar e distribuir horas</button>
+              </div>
+            </div>
+            <div id="tm-prev-b" style="padding:16px"></div>
+          </div>
+          <div class="card"><div class="ch"><span class="ct">Importações recentes</span></div><div id="imp-tm"><div class="empty">Nenhuma</div></div></div>
+        </div>
+
+        <div id="it-eq" class="ipan">
+          <div class="upz" onclick="document.getElementById('f-eq').click()">
+            <div style="font-size:32px;margin-bottom:10px">👥</div>
+            <div style="font-size:15px;font-weight:500;margin-bottom:5px">Importar Lista de Equipe</div>
+            <div style="font-size:12px;color:var(--wh3)">Arquivo .xlsx — apenas os <strong>nomes dos colaboradores</strong> são lidos (primeira coluna com nomes)</div>
+            <input type="file" id="f-eq" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleEQ(this)">
+          </div>
+          <div class="card">
+            <div class="ch"><span class="ct">Formato esperado — qualquer planilha com nomes</span></div>
+            <div class="th" style="grid-template-columns:1fr 2fr"><div>Nome</div><div>Outras colunas (ignoradas)</div></div>
+            <div class="tr" style="grid-template-columns:1fr 2fr;font-size:12px;color:var(--wh3)"><div>Ana Lima</div><div>Função, cargo, data — qualquer coisa</div></div>
+            <div style="padding:8px 18px;font-size:11px;color:var(--wh3);border-top:.5px solid var(--br)">Somente a <strong>primeira coluna</strong> é lida. O cabeçalho (se existir) é ignorado automaticamente.</div>
+          </div>
+          <div class="card" id="eq-prev" style="display:none">
+            <div class="ch">
+              <span class="ct" id="eq-prev-t">Equipe identificada</span>
+              <button class="btn btn-p btn-sm" onclick="confirmEQ()">Confirmar equipe</button>
+            </div>
+            <div id="eq-prev-b"></div>
+          </div>
+          <div class="card"><div class="ch"><span class="ct">Importações recentes</span></div><div id="imp-eq"><div class="empty">Nenhuma</div></div></div>
+        </div>
+      </div>
+
+      <div id="pp-folgas" class="panel">
+        <div class="ph"><div class="pt">Sugestões de folga</div><div class="pst">Saldo acumulado × dias sem eventos confirmados</div></div>
+        <div class="fgrid" id="fgrid"><div class="empty">Nenhum colaborador com saldo acima do limite ainda.</div></div>
+      </div>
+
+      <div id="pp-historico" class="panel">
+        <div class="ph"><div class="pt">Histórico</div><div class="pst">Todos os lançamentos com responsável — salvos localmente</div></div>
+        <div id="hlist"><div class="empty">Nenhum lançamento ainda</div></div>
+      </div>
+
+      <div id="pp-config" class="panel">
+        <div class="ph"><div class="pt">Configurações</div></div>
+        <div class="cfg">
+          <div class="cgt">🔌 Integração Notion</div>
+          <div class="cf" style="max-width:480px;margin-bottom:14px"><label>Token de integração (para sincronizar com todos os gestores)</label><input type="password" id="cfg-tk" placeholder="secret_xxxxxxxxxxxx"></div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-p" onclick="conectarNotion()">Conectar Notion</button>
+            <button class="btn btn-sm" onclick="sincNotion()">↑ Sincronizar lançamentos</button>
+          </div>
+          <div class="ninfo">
+            <span>ℹ️</span>
+            <div>
+              Base criada: <code>⏱️ Banco de Horas</code> no Notion<br>
+              Colaboradores: <code>🫂 Colaboradores</code> — Operacional, Ativos<br>
+              Eventos: <code>📡 Eventos</code> — Confirmados / Em Andamento<br>
+              <strong>Sem token:</strong> dados salvos localmente no navegador.
+            </div>
+          </div>
+        </div>
+        <div class="cfg">
+          <div class="cgt">⚙️ Parâmetros</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:500px">
+            <div class="cf"><label>Jornada padrão (h/dia)</label><input type="number" id="cfg-jn" value="8" min="4" max="12"><div class="cfh">Horas descontadas ao registrar folga</div></div>
+            <div class="cf"><label>Gatilho de folga (h extras)</label><input type="number" id="cfg-lm" value="8" min="1" max="24"><div class="cfh">A partir de quando aparece sugestão</div></div>
+          </div>
+          <button class="btn btn-p btn-sm" onclick="salvarParams()" style="margin-top:14px">Salvar parâmetros</button>
+        </div>
+        <div class="cfg">
+          <div class="cgt">👤 Usuários</div>
+          <div id="ulist"></div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn btn-sm" onclick="addUser()">+ Usuário</button>
+            <button class="btn btn-p btn-sm" onclick="saveUsers()">Salvar</button>
+          </div>
+        </div>
+        <div class="cfg" style="border-color:rgba(232,39,26,.3)">
+          <div class="cgt" style="color:#F87171">⚠️ Zona de perigo</div>
+          <button class="btn btn-sm" onclick="limparDados()" style="color:#F87171;border-color:rgba(232,39,26,.3)">Limpar todos os dados locais</button>
+          <div class="cfh" style="margin-top:6px">Remove colaboradores, horas e histórico salvos neste navegador.</div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="ov" id="modal">
+  <div class="modal">
+    <div class="mt2" id="mod-t">Registrar folga</div>
+    <div class="ms2" id="mod-s"></div>
+    <div class="ma"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-p" onclick="confirmFolga()">Confirmar folga</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ══ CONSTANTES NOTION ════════════════════════════════
+const N_COLABS  = '3140d857-75f7-80fe-a338-000bd037de27';
+const N_EVENTOS = '25c0d857-75f7-81b3-adc3-000bafc1f2bd';
+const N_BANCO   = 'b6607b1c-aa7f-4769-af94-f538170d6094';
+const PAL = [
+  ['#1E3A5F','#60A5FA'],['#1A3A2A','#4ADE80'],['#3A1A1A','#F87171'],
+  ['#3A2A1A','#FBBF24'],['#2A1A3A','#A78BFA'],['#1A3A38','#2DD4BF'],
+  ['#3A1A2E','#F472B6'],['#2A3A1A','#86EFAC']
+];
+
+// ── Estado persistido ────────────────────────────────
+function carregarEstado() {
+  try { const s=localStorage.getItem('firma_go_v1'); if(s) return JSON.parse(s); } catch(e){}
+  return { jorn:8, lim:8, colabs:[], eventos:[], historico:[], notionTk:'',
+           users:[{u:'admin',p:'admin123',name:'Administrador',role:'admin'}],
+           tmPendente:null, eqPendente:[] };
+}
+function salvarEstado() { try { localStorage.setItem('firma_go_v1', JSON.stringify(S)); } catch(e){} }
+
+let S = carregarEstado();
+let CU = null;
+
+// ── Auth ─────────────────────────────────────────────
+function doLogin() {
+  const u=document.getElementById('l-u').value.trim(), p=document.getElementById('l-p').value;
+  const f=S.users.find(x=>x.u===u&&x.p===p);
+  if(!f){document.getElementById('lerr').style.display='block';return;}
+  CU=f;
+  document.getElementById('ls').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('u-lb').textContent=f.name||f.u;
+  document.getElementById('u-av').textContent=(f.name||f.u)[0].toUpperCase();
+  document.getElementById('lerr').style.display='none';
+  if(S.notionTk){document.getElementById('cfg-tk').value=S.notionTk;document.getElementById('n-st').textContent='● Notion conectado';document.getElementById('n-st').className='npill np-ok';}
+  document.getElementById('cfg-jn').value=S.jorn;
+  document.getElementById('cfg-lm').value=S.lim;
+  renderColabs(); renderCal(); renderFolgas();
+  if(S.notionTk) loadEventos();
+}
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('ls').style.display!=='none')doLogin();});
+function doLogout(){CU=null;document.getElementById('app').style.display='none';document.getElementById('ls').style.display='flex';document.getElementById('l-p').value='';}
+
+// ── Nav ──────────────────────────────────────────────
+function gp(n,el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(x=>x.classList.remove('active'));
+  document.getElementById('pp-'+n).classList.add('active');
+  if(el)el.classList.add('active');
+  if(n==='folgas')renderFolgas();
+  if(n==='historico')renderHist();
+  if(n==='config')renderUsers();
+  if(n==='painel'){renderColabs();renderCal();}
+  if(n==='eventos')renderEventos();
+}
+function sit(n,el){
+  document.querySelectorAll('.ipan').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.itab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('it-'+n).classList.add('active');
+  if(el)el.classList.add('active');
+}
+
+// ── Helpers ──────────────────────────────────────────
+function ini(s){return s.trim().split(/\s+/).slice(0,2).map(n=>n[0]).join('').toUpperCase();}
+function fmtD(s){if(!s)return'—';const d=new Date(s);return isNaN(d)?s:d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'});}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
+function getSt(h){if(h>=S.lim)return{l:'Urgente',c:'b-r'};if(h>=4)return{l:'Atenção',c:'b-a'};return{l:'Regular',c:'b-g'};}
+function bColor(h){return h>=S.lim?'var(--red)':h>=4?'var(--amber)':'var(--green)';}
+
+// Converte valor de célula Excel para minutos do dia
+function toMin(v){
+  if(v==null)return null;
+  if(v instanceof Date)return v.getHours()*60+v.getMinutes();
+  const s=String(v).trim();if(!s)return null;
+  if(!isNaN(s)&&!s.includes(':'))return Math.round(parseFloat(s)*24*60);
+  const[h,m]=s.split(':').map(Number);return h*60+(m||0);
+}
+
+// ── Parser T&M no formato real da Firma ──────────────
+// Estrutura: linha 1 = título (T&M - NOME EVENTO DATA), linha 2 = cabeçalho, dados nas linhas seguintes
+// Colunas: DATA(0) INFORM(1) LOCAL(2) HORÁRIO(3) HORÁRIO FIM(4) ATIVIDADE(5) DURAÇÃO(6) OBS(7)
+// Lógica: pega entrada mais cedo e saída mais tarde por dia, apenas linhas onde OBS contém FIRMA
+function parseTM(wb){
+  const ws=wb.Sheets[wb.SheetNames[0]];
+  const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:false});
+  const raw2=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
+  let eventoNome='';
+  const dias={};
+
+  for(let i=0;i<raw.length;i++){
+    const row=raw[i],row2=raw2[i];
+    // Título do bloco
+    if(row[0]&&typeof row[0]==='string'&&row[0].startsWith('T&M')){
+      if(!eventoNome){
+        eventoNome=row[0].replace(/^T&M\s*-\s*/i,'').replace(/\d{2}\/\d{2}.*$/,'').trim();
+      }
+      continue;
+    }
+    // Cabeçalho
+    if(row[0]&&typeof row[0]==='string'&&row[0].toUpperCase().includes('DATA'))continue;
+    // OBS deve conter FIRMA
+    const obs=row[7]?String(row[7]).toUpperCase():'';
+    if(!obs.includes('FIRMA'))continue;
+    // Data
+    let diaStr=null;
+    const dv=row2[0];
+    if(typeof dv==='number'){
+      const d=XLSX.SSF.parse_date_code(dv);
+      if(d)diaStr=`${String(d.d).padStart(2,'0')}/${String(d.m).padStart(2,'0')}/${d.y}`;
+    }else if(row[0]){
+      const d=new Date(row[0]);
+      if(!isNaN(d))diaStr=d.toLocaleDateString('pt-BR');
+      else if(typeof row[0]==='string'&&row[0].includes('/'))diaStr=row[0].trim().split(' ')[0];
+    }
+    if(!diaStr)continue;
+    // Horários
+    let iniMin=toMin(row2[3]),fimMin=toMin(row2[4]);
+    if(iniMin==null&&row[3])iniMin=toMin(row[3]);
+    if(fimMin==null&&row[4])fimMin=toMin(row[4]);
+    if(iniMin==null||fimMin==null)continue;
+    if(fimMin<iniMin)fimMin+=24*60;
+    if(!dias[diaStr])dias[diaStr]={ini:iniMin,fim:fimMin};
+    else{dias[diaStr].ini=Math.min(dias[diaStr].ini,iniMin);dias[diaStr].fim=Math.max(dias[diaStr].fim,fimMin);}
+  }
+  return{eventoNome,dias};
+}
+
+// ── Handler T&M ──────────────────────────────────────
+function handleTM(inp){
+  if(!inp.files[0])return;
+  const rd=new FileReader();
+  rd.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array',cellDates:false});
+      const{eventoNome,dias}=parseTM(wb);
+      if(!Object.keys(dias).length){toast('⚠️ Nenhuma linha FIRMA com horários encontrada. Verifique se a coluna OBS contém "FIRMA".');return;}
+      let totalMin=0;
+      Object.values(dias).forEach(d=>totalMin+=(d.fim-d.ini));
+      const totalH=totalMin/60;
+      S.tmPendente={eventoNome,dias,totalH};
+      const prev=document.getElementById('tm-prev');
+      document.getElementById('tm-prev-t').textContent=eventoNome||'Evento';
+      prev.style.display='block';
+      let html=`<div style="background:var(--bk3);border-radius:var(--r);padding:14px 16px;margin-bottom:12px">
+        <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:10px">📋 ${eventoNome}</div>`;
+      Object.entries(dias).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([dia,v])=>{
+        const h=(v.fim-v.ini)/60;
+        const iS=`${String(Math.floor(v.ini/60)).padStart(2,'0')}:${String(v.ini%60).padStart(2,'0')}`;
+        const fS=`${String(Math.floor(v.fim/60)).padStart(2,'0')}:${String(v.fim%60).padStart(2,'0')}`;
+        html+=`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:.5px solid var(--br);font-size:12px"><span style="color:var(--wh3)">${dia} · ${iS} → ${fS}</span><span style="font-family:'DM Mono',monospace;color:var(--green)">${h.toFixed(1)}h</span></div>`;
+      });
+      html+=`<div style="display:flex;justify-content:space-between;padding:8px 0 0;font-weight:600;font-size:13px"><span>Total por colaborador</span><span style="font-family:'DM Mono',monospace;color:var(--red);font-size:16px">${totalH.toFixed(1)}h</span></div></div>`;
+      html+=`<div style="font-size:12px;color:var(--wh3);padding:0 2px">Agora importe a lista de equipe na aba <strong>👥 Lista de Equipe</strong> — cada colaborador da lista receberá ${totalH.toFixed(1)}h no banco.</div>`;
+      document.getElementById('tm-prev-b').innerHTML=html;
+      atualizarBotaoTM();
+      toast(`✅ T&M lido: ${totalH.toFixed(1)}h em ${Object.keys(dias).length} dia(s). Importe a equipe para confirmar.`);
+    }catch(err){toast('❌ Erro: '+err.message);console.error(err);}
+  };
+  rd.readAsArrayBuffer(inp.files[0]);
+}
+
+function atualizarBotaoTM(){
+  const btn=document.getElementById('tm-confirmar');
+  const info=document.getElementById('tm-prev-eq');
+  if(!btn||!info)return;
+  if(S.tmPendente&&S.eqPendente&&S.eqPendente.length){
+    btn.style.display='inline-flex';
+    info.textContent=`${S.eqPendente.length} colaboradores prontos`;
+  }else{
+    btn.style.display='none';
+    info.textContent=S.tmPendente?'Importe a lista de equipe para distribuir as horas':'';
+  }
+}
+
+// ── Handler Equipe — lê nomes, ignora freelancers ────
+// Regra: se qualquer coluna da linha contiver "freelancer", a linha é ignorada.
+// Apenas linhas com "firma" (ou sem categoria definida) são incluídas.
+function handleEQ(inp){
+  if(!inp.files[0])return;
+  const nome=inp.files[0].name;
+  const rd=new FileReader();
+  rd.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
+
+      const HEADERS=['NOME','COLABORADOR','EQUIPE','PARTICIPANTE','TÉCNICO','TECNICO','FUNÇÃO','FUNCAO','CATEGORIA','TIPO'];
+      const nomes=[], ignorados=[];
+
+      for(const row of raw){
+        const val=row[0];if(!val)continue;
+        const s=String(val).trim();if(!s||s.length<3)continue;
+        // Ignora linha de cabeçalho
+        if(HEADERS.includes(s.toUpperCase()))continue;
+        // Verifica se QUALQUER coluna da linha contém "freelancer"
+        const linhaCompleta=row.map(c=>String(c||'').toUpperCase()).join(' ');
+        if(linhaCompleta.includes('FREELANCER')){
+          ignorados.push(s);
+          continue;
+        }
+        nomes.push(s);
+      }
+
+      if(!nomes.length){toast('⚠️ Nenhum colaborador Firma encontrado');return;}
+      S.eqPendente=nomes;salvarEstado();
+
+      document.getElementById('eq-prev-t').textContent=`${nomes.length} colaboradores Firma em "${nome}"`;
+      document.getElementById('eq-prev').style.display='block';
+
+      const existentes=S.colabs.map(c=>c.nome.toLowerCase());
+      let ok=0,novos=0;
+      let html=`<div class="th" style="grid-template-columns:1fr 1fr"><div>Nome</div><div>Status no banco</div></div>`;
+      html+=nomes.map(n=>{
+        const ex=existentes.find(e=>e.includes(n.split(' ')[0].toLowerCase()));
+        if(ex)ok++;else novos++;
+        return`<div class="tr" style="grid-template-columns:1fr 1fr"><div style="font-weight:500">${n}</div><div style="font-size:11px;color:${ex?'var(--green)':'var(--amber)'}">${ex?'✓ Já cadastrado':'+ Novo colaborador'}</div></div>`;
+      }).join('');
+      // Mostra freelancers ignorados
+      if(ignorados.length){
+        html+=`<div style="padding:6px 18px;font-size:11px;color:var(--wh3);border-top:.5px solid var(--br);border-bottom:.5px solid var(--br)">🚫 ${ignorados.length} freelancer${ignorados.length>1?'s':''} ignorado${ignorados.length>1?'s':''}: ${ignorados.join(', ')}</div>`;
+      }
+      html+=`<div style="padding:10px 18px;font-size:11px;color:var(--wh3)">${ok} já cadastrados · ${novos} novos${S.tmPendente?` · cada um receberá ${S.tmPendente.totalH.toFixed(1)}h`:''}</div>`;
+      document.getElementById('eq-prev-b').innerHTML=html;
+
+      atualizarBotaoTM();
+      const msg=ignorados.length?`✅ ${nomes.length} Firma lidos, ${ignorados.length} freelancer(s) ignorados.`:`✅ ${nomes.length} nomes lidos.`;
+      toast(msg);
+    }catch(err){toast('❌ Erro: '+err.message);}
+  };
+  rd.readAsArrayBuffer(inp.files[0]);
+}
+
+function confirmEQ(){
+  if(!S.eqPendente.length)return;
+  let novos=0;
+  S.eqPendente.forEach(n=>{
+    if(!S.colabs.find(c=>c.nome.toLowerCase()===n.toLowerCase())){
+      S.colabs.push({nome:n,funcao:'—',dept:'Operacional',horas:0,ultima_folga:null});novos++;
+    }
+  });
+  salvarEstado();
+  addImpRow('imp-eq',`${S.eqPendente.length} pessoas · ${novos} novas`,'👥');
+  toast(`✅ Equipe salva! ${novos} novos colaboradores.`);
+  renderColabs();atualizarBotaoTM();
+}
+
+function confirmTM(){
+  const tm=S.tmPendente,eq=S.eqPendente;
+  if(!tm||!eq.length){toast('⚠️ Importe T&M e lista de equipe antes de confirmar');return;}
+  const totalH=tm.totalH;
+  eq.forEach(n=>{
+    let c=S.colabs.find(x=>x.nome.toLowerCase()===n.toLowerCase());
+    if(!c){c={nome:n,funcao:'—',dept:'Operacional',horas:0,ultima_folga:null};S.colabs.push(c);}
+    c.horas=Math.round(((c.horas||0)+totalH)*10)/10;
+    const entry={tipo:'work',colab:n,desc:`${tm.eventoNome} — ${totalH.toFixed(1)}h`,data:new Date().toLocaleDateString('pt-BR'),delta:totalH,gestor:CU?.name||'—',ts:Date.now()};
+    S.historico.push(entry);
+    if(S.notionTk)sincLancamento(entry);
+  });
+  salvarEstado();
+  S.tmPendente=null;S.eqPendente=[];
+  document.getElementById('tm-prev').style.display='none';
+  document.getElementById('eq-prev').style.display='none';
+  addImpRow('imp-tm',`${eq.length} colaboradores · ${totalH.toFixed(1)}h cada`,'📋');
+  toast(`✅ ${eq.length} colaboradores receberam ${totalH.toFixed(1)}h!`);
+  renderColabs();renderFolgas();
+}
+
+function addImpRow(id,meta,ic){
+  const el=document.getElementById(id);
+  if(el.querySelector('.empty'))el.innerHTML='';
+  const it=document.createElement('div');it.className='hi';
+  it.innerHTML=`<div class="hic hw">${ic}</div><div class="hii"><div class="hit">Importação realizada</div><div class="him">${new Date().toLocaleDateString('pt-BR')} · ${meta} · por ${CU?.name||'—'}</div></div><span class="badge b-g">OK</span>`;
+  el.prepend(it);
+}
+
+// ── Render ───────────────────────────────────────────
+function renderColabs(){
+  const el=document.getElementById('clist');
+  if(!S.colabs.length){el.innerHTML='<div class="empty">Nenhum dado. Importe T&M e lista de equipe.</div>';updMets();return;}
+  updMets();
+  el.innerHTML=S.colabs.map((c,i)=>{
+    const[bg,fg]=PAL[i%PAL.length],st=getSt(c.horas),pct=Math.min(100,(c.horas/16)*100);
+    return`<div class="tr g6">
+      <div class="cc"><div class="av" style="background:${bg};color:${fg}">${ini(c.nome)}</div><div><div style="font-size:13px;font-weight:500">${c.nome}</div><div style="font-size:11px;color:var(--wh3)">${c.dept||'Operacional'}</div></div></div>
+      <div style="font-size:12px;color:var(--wh3)">${c.funcao||'—'}</div>
+      <div><div style="font-size:13px;font-weight:500;font-family:'DM Mono',monospace">${(c.horas||0).toFixed(1)}h</div><div class="bar-bg"><div class="bar-f" style="width:${pct}%;background:${bColor(c.horas)}"></div></div></div>
+      <div><span class="badge ${st.c}">${st.l}</span></div>
+      <div class="hide" style="font-size:12px;color:var(--wh3)">${c.ultima_folga||'—'}</div>
+      <div>${c.horas>=S.lim?`<button class="btn btn-sm" onclick="openModal(${S.colabs.indexOf(c)})">Folga</button>`:'<span style="font-size:11px;color:var(--wh3)">—</span>'}</div>
+    </div>`;
+  }).join('');
+}
+
+function updMets(){
+  const urg=S.colabs.filter(c=>c.horas>=S.lim),tot=S.colabs.reduce((a,c)=>a+(c.horas||0),0);
+  document.getElementById('m-tot').textContent=S.colabs.length||'—';
+  document.getElementById('m-prec').textContent=urg.length||'0';
+  document.getElementById('m-banco').textContent=tot>0?tot.toFixed(0)+'h':'—';
+  document.getElementById('badge-f').textContent=urg.length;
+  const modo=S.notionTk?'Sincronizado com Notion':'Salvo localmente';
+  document.getElementById('psub').textContent=`${new Date().toLocaleDateString('pt-BR')} · ${modo}`;
+  const prx=S.eventos.filter(e=>e.data&&new Date(e.data)>=new Date()).sort((a,b)=>new Date(a.data)-new Date(b.data))[0];
+  if(prx){document.getElementById('m-prox').textContent=(prx.nome||'').slice(0,22);document.getElementById('m-prox-n').textContent=fmtD(prx.data);}
+}
+
+function renderCal(){
+  const g=document.getElementById('cal'),hj=new Date();hj.setHours(0,0,0,0);
+  const dts=new Set(S.eventos.filter(e=>e.status==='Confirmado'||e.status==='Em Andamento - Produtora').map(e=>e.data?.split('T')[0]).filter(Boolean));
+  const st=new Date(hj);st.setDate(1);
+  let c='';for(let i=0;i<st.getDay();i++)c+=`<div class="cc2 c-e"></div>`;
+  const dm=new Date(st.getFullYear(),st.getMonth()+2,0).getDate();
+  for(let d=1;d<=dm;d++){
+    const dt=new Date(st.getFullYear(),st.getMonth(),d),ds=dt.toISOString().split('T')[0];
+    const ev=dts.has(ds),isT=dt.getTime()===hj.getTime();
+    c+=`<div class="cc2 ${ev?'c-h':'c-e'}${isT?' c-t':''}"><div class="cc2n">${d}</div>${ev?`<div class="cc2d" style="background:var(--red)"></div>`:''}</div>`;
+  }
+  g.innerHTML=c;
+}
+
+function renderEventos(){
+  const el=document.getElementById('evlist');
+  if(!S.eventos.length){el.innerHTML='<div class="empty">Configure o token Notion para carregar eventos.</div>';return;}
+  const mp={'Confirmado':'b-g','Realizado':'b-b','Prospecção':'b-a','Cancelado':'b-r','Em Andamento - Produtora':'b-p'};
+  el.innerHTML=S.eventos.map(e=>`
+    <div class="tr g4">
+      <div style="font-weight:500">${e.nome}</div>
+      <div style="font-size:12px;color:var(--wh3)">${fmtD(e.data)}</div>
+      <div><span class="badge ${mp[e.status]||'b-x'}">${e.status||'—'}</span></div>
+      <div style="font-size:12px;color:var(--wh3)">${e.montagem&&e.desmontagem?Math.ceil((new Date(e.desmontagem)-new Date(e.montagem))/(864e5))+' dias':'—'}</div>
+    </div>`).join('');
+}
+
+function renderFolgas(){
+  const grid=document.getElementById('fgrid');
+  const urg=S.colabs.filter(c=>c.horas>=S.lim).sort((a,b)=>b.horas-a.horas);
+  if(!urg.length){grid.innerHTML='<div class="empty" style="grid-column:1/-1">✅ Nenhum colaborador precisa de folga no momento.</div>';return;}
+  const hj=new Date();
+  const dts=new Set(S.eventos.filter(e=>e.status==='Confirmado'||e.status==='Em Andamento - Produtora').map(e=>e.data?.split('T')[0]).filter(Boolean));
+  const lv=[];
+  for(let i=1;i<=45;i++){
+    const d=new Date(hj);d.setDate(hj.getDate()+i);
+    if(d.getDay()!==0&&d.getDay()!==6){const ds=d.toISOString().split('T')[0];lv.push({date:ds,label:d.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'}),livre:!dts.has(ds)});}
+    if(lv.length>=14)break;
+  }
+  grid.innerHTML=urg.map((c,i)=>{
+    const[bg,fg]=PAL[i%PAL.length],mb=lv.filter(d=>d.livre).slice(0,2);
+    if(!mb.length)return'';
+    return`<div class="fc">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <div class="av" style="background:${bg};color:${fg};width:32px;height:32px">${ini(c.nome)}</div>
+        <div><div style="font-size:13px;font-weight:500">${c.nome}</div><div style="font-size:11px;color:var(--wh3)">${(c.horas||0).toFixed(1)}h acumuladas</div></div>
+      </div>
+      <div style="margin-bottom:10px">${mb.map(d=>`<div class="fd"><span style="color:var(--wh3)">${d.label}</span><span class="badge b-g">Sem eventos</span></div>`).join('')}</div>
+      <button class="btn btn-p" style="width:100%;padding:8px;font-size:12px" onclick="openModal(${S.colabs.indexOf(c)},'${mb[0].label}')">Registrar folga</button>
+    </div>`;
+  }).join('');
+}
+
+function renderHist(){
+  const el=document.getElementById('hlist');
+  if(!S.historico.length){el.innerHTML='<div class="empty">Nenhum lançamento ainda</div>';return;}
+  el.innerHTML=[...S.historico].reverse().map(h=>`
+    <div class="hi">
+      <div class="hic ${h.tipo==='folga'?'hf':'hw'}">${h.tipo==='folga'?'🌴':'📋'}</div>
+      <div class="hii"><div class="hit">${h.colab} — ${h.desc}</div><div class="him">${h.data} · por <strong>${h.gestor||'—'}</strong></div></div>
+      <div class="${(h.delta||0)>0?'dp':(h.delta||0)<0?'dn':'dz'}">${(h.delta||0)>0?'+':''}${(h.delta||0).toFixed(1)}h</div>
+    </div>`).join('');
+}
+
+// ── Modal ────────────────────────────────────────────
+let _pi=null,_pd='';
+function openModal(idx,dia){
+  _pi=idx;_pd=dia||'próximo dia disponível';
+  const c=S.colabs[idx],novo=Math.max(0,(c.horas||0)-S.jorn);
+  document.getElementById('mod-t').textContent=`Registrar folga — ${c.nome}`;
+  document.getElementById('mod-s').textContent=`Dia sugerido: ${_pd}\nHoras a descontar: ${S.jorn}h\nSaldo atual: ${(c.horas||0).toFixed(1)}h → Novo saldo: ${novo.toFixed(1)}h`;
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal(){document.getElementById('modal').classList.remove('open');_pi=null;}
+function confirmFolga(){
+  if(_pi===null)return;
+  const c=S.colabs[_pi],d=Math.min(c.horas||0,S.jorn);
+  c.horas=Math.max(0,(c.horas||0)-d);c.ultima_folga=_pd;
+  const entry={tipo:'folga',colab:c.nome,desc:`Folga em ${_pd}`,data:new Date().toLocaleDateString('pt-BR'),delta:-d,gestor:CU?.name||'—',ts:Date.now()};
+  S.historico.push(entry);salvarEstado();closeModal();
+  toast(`🌴 Folga de ${c.nome} registrada!`);
+  renderColabs();renderFolgas();renderHist();
+  if(S.notionTk)sincLancamento(entry);
+}
+
+// ── Notion ───────────────────────────────────────────
+async function nFetch(path,body){
+  // Usa o proxy Netlify — resolve CORS sem expor o token no HTML
+  try{
+    const r=await fetch('/notion/'+path,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(body)
+    });
+    if(!r.ok)return null;
+    return await r.json();
+  }catch(e){return null;}
+}
+async function conectarNotion(){
+  toast('🔄 Conectando ao Notion...');
+  S.notionTk='via-proxy';salvarEstado();
+  const r=await nFetch(`databases/${N_COLABS}/query`,{filter:{and:[{property:'Status do Colaborador',select:{equals:'Ativo'}},{property:'Departamento',select:{equals:'Operacional'}}]},page_size:50});
+  if(!r){toast('❌ Falha. Verifique o token e permissões.');return;}
+  let novos=0;
+  for(const p of(r.results||[])){const pr=p.properties||{},nm=pr['Nome']?.title?.[0]?.plain_text||'';if(!nm)continue;if(!S.colabs.find(c=>c.nome===nm)){S.colabs.push({nome:nm,funcao:pr['Função']?.select?.name||'—',dept:'Operacional',horas:0,ultima_folga:null});novos++;}}
+  salvarEstado();
+  document.getElementById('n-st').textContent='● Notion conectado';document.getElementById('n-st').className='npill np-ok';
+  toast(`✅ Notion conectado! ${novos} novos colaboradores.`);renderColabs();
+  await loadEventos();
+}
+async function loadEventos(){
+  if(!S.notionTk)return;
+  const r=await nFetch(`databases/${N_EVENTOS}/query`,{filter:{or:[{property:'Status do Evento',select:{equals:'Confirmado'}},{property:'Status do Evento',select:{equals:'Em Andamento - Produtora'}}]},sorts:[{property:'Data do Evento',direction:'ascending'}],page_size:30});
+  if(!r)return;
+  S.eventos=(r.results||[]).map(p=>{const pr=p.properties||{};return{nome:pr['Evento']?.title?.[0]?.plain_text||'—',data:pr['Data do Evento']?.date?.start||null,montagem:pr['Montagem']?.date?.start||null,desmontagem:pr['Desmontagem']?.date?.start||null,status:pr['Status do Evento']?.select?.name||'—'};});
+  salvarEstado();renderEventos();renderFolgas();renderCal();updMets();
+  toast(`✅ ${S.eventos.length} eventos carregados!`);
+}
+async function sincLancamento(h){
+  if(!S.notionTk)return;
+  await nFetch('pages',{parent:{database_id:N_BANCO},properties:{'Colaborador':{title:[{text:{content:h.colab}}]},'Tipo':{select:{name:h.tipo==='folga'?'Folga':'Horas Trabalhadas'}},'Horas':{number:Math.abs(h.delta||0)},'Evento':{rich_text:[{text:{content:h.desc||''}}]},'Data':{date:{start:new Date().toISOString().split('T')[0]}},'Gestor Responsável':{rich_text:[{text:{content:h.gestor||'—'}}]}}});
+}
+async function sincNotion(){
+  if(!S.notionTk){toast('⚠️ Configure o token Notion primeiro');return;}
+  toast('🔄 Sincronizando...');let ok=0;
+  for(const h of S.historico.slice(-20)){await sincLancamento(h);ok++;}
+  toast(`✅ ${ok} lançamentos enviados ao Notion!`);
+}
+
+// ── Config ───────────────────────────────────────────
+// ── Importar sincronização offline ───────────────────
+function importarSync(inp){
+  if(!inp.files[0])return;
+  const rd=new FileReader();
+  rd.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!data.colaboradores||!data.eventos){toast('⚠️ Arquivo inválido');return;}
+      let novosC=0,novosE=0;
+      // Colaboradores
+      for(const c of data.colaboradores){
+        if(!S.colabs.find(x=>x.nome===c.nome)){
+          S.colabs.push({nome:c.nome,funcao:c.funcao||'—',dept:c.dept||'Operacional',horas:c.horas||0,ultima_folga:c.ultima_folga||null});
+          novosC++;
+        }
+      }
+      // Eventos
+      S.eventos=data.eventos;novosE=data.eventos.length;
+      salvarEstado();
+      document.getElementById('n-st').textContent=`● Notion (${data.gerado_em||'sincronizado'})`;
+      document.getElementById('n-st').className='npill np-ok';
+      renderColabs();renderCal();renderFolgas();renderEventos();
+      toast(`✅ ${novosC} colaboradores e ${novosE} eventos importados!`);
+    }catch(e){toast('❌ Erro ao ler arquivo: '+e.message);}
+  };
+  rd.readAsText(inp.files[0]);
+}
+
+// ── Importar JSON de sincronização do Notion ─────────
+function handleSync(inp){
+  if(!inp.files[0])return;
+  const rd=new FileReader();
+  rd.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!data.colaboradores&&!data.eventos){toast('⚠️ Arquivo inválido');return;}
+      let novosC=0, novosEv=0;
+      // Sincroniza colaboradores — preserva horas existentes
+      if(data.colaboradores){
+        for(const c of data.colaboradores){
+          if(!S.colabs.find(x=>x.nome.toLowerCase()===c.nome.toLowerCase())){
+            S.colabs.push({nome:c.nome,funcao:c.funcao||'—',dept:c.dept||'Operacional',horas:0,ultima_folga:null});
+            novosC++;
+          }
+        }
+      }
+      // Substitui eventos
+      if(data.eventos){
+        S.eventos=data.eventos;
+        novosEv=data.eventos.length;
+      }
+      salvarEstado();
+      const dt=data.gerado_em||'—';
+      document.getElementById('sync-status').textContent=`Sincronizado em ${dt} · ${novosC} novos colaboradores · ${novosEv} eventos`;
+      toast(`✅ Sincronização aplicada! ${novosC} novos colaboradores, ${novosEv} eventos.`);
+      renderColabs();renderCal();renderFolgas();updMets();
+    }catch(err){toast('❌ Erro ao ler arquivo: '+err.message);}
+  };
+  rd.readAsText(inp.files[0]);
+}
+
+function renderUsers(){document.getElementById('ulist').innerHTML=S.users.map((u,i)=>`<div class="ur"><input value="${u.name}" placeholder="Nome" oninput="S.users[${i}].name=this.value"><input value="${u.u}" placeholder="Usuário" oninput="S.users[${i}].u=this.value"><input type="password" value="${u.p}" placeholder="Senha" oninput="S.users[${i}].p=this.value"><button class="btn btn-sm" onclick="rmUser(${i})" style="color:#F87171;border-color:rgba(232,39,26,.3);flex-shrink:0">✕</button></div>`).join('');}
+function addUser(){S.users.push({u:'',p:'',name:'',role:'user'});renderUsers();}
+function rmUser(i){if(S.users.length<=1){toast('⚠️ Mínimo 1 usuário');return;}S.users.splice(i,1);renderUsers();}
+function saveUsers(){salvarEstado();renderUsers();toast('✅ Usuários salvos!');}
+function salvarParams(){S.jorn=+document.getElementById('cfg-jn').value||8;S.lim=+document.getElementById('cfg-lm').value||8;salvarEstado();toast('✅ Parâmetros salvos!');renderColabs();renderFolgas();}
+function limparDados(){if(!confirm('Apagar todos os dados locais?'))return;S.colabs=[];S.historico=[];S.eventos=[];S.tmPendente=null;S.eqPendente=[];salvarEstado();renderColabs();renderHist();renderFolgas();renderCal();toast('🗑️ Dados removidos.');}
+
+renderUsers();
+</script>
+</body>
+</html>
