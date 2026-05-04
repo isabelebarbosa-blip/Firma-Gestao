@@ -193,7 +193,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bk);color:var(--wh);font-
       <div class="bw">FIRMA<span>.</span></div>
       <div class="bt2">Produções &amp; Eventos</div>
       <div class="brl"></div>
-      <div class="bd">Sistema de gestão operacional — banco de horas, folgas e time.</div>
+      <div class="bd">Sistema de gestão operacional — gestão operacional, folgas e time.</div>
     </div>
   </div>
   <div class="lr">
@@ -204,7 +204,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bk);color:var(--wh);font-
       <div class="lf"><label>Senha</label><input type="password" id="l-p" autocomplete="current-password" placeholder="••••••••"></div>
       <button class="lbtn" onclick="doLogin()">Entrar</button>
       <div class="lerr" id="lerr">Usuário ou senha incorretos</div>
-      <div class="lhint">Padrão: <code>admin</code> / <code>admin123</code></div>
+
     </div>
   </div>
 </div>
@@ -232,17 +232,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--bk);color:var(--wh);font-
       <div class="ni" onclick="gp('importar',this)"><span>📋</span>Importar</div>
       <div class="ni" onclick="gp('folgas',this)"><span>🌴</span>Folgas <span class="nib" id="badge-f">0</span></div>
       <div class="ni" onclick="gp('historico',this)"><span>📜</span>Histórico</div>
-      <div class="ns">Sistema</div>
-      <div class="ni" onclick="gp('config',this)"><span>⚙️</span>Configurações</div>
+      <div class="ns" id="ns-sistema" style="display:none">Sistema</div>
+      <div class="ni" id="ni-config" style="display:none" onclick="gp('config',this)"><span>⚙️</span>Configurações</div>
     </nav>
 
     <main class="main">
       <div id="pp-painel" class="panel active">
         <div class="ph"><div class="pt">Painel operacional</div><div class="pst" id="psub">—</div></div>
         <div class="mets">
-          <div class="met"><div class="ml">Colaboradores</div><div class="mv" id="m-tot">—</div><div class="ms">com horas lançadas</div></div>
-          <div class="met"><div class="ml">Precisam folgar</div><div class="mv mv-w" id="m-prec">—</div><div class="ms">≥ limite configurado</div></div>
-          <div class="met"><div class="ml">Banco total</div><div class="mv" id="m-banco">—</div><div class="ms">horas acumuladas</div></div>
+          <div class="met"><div class="ml">Colaboradores</div><div class="mv" id="m-tot">—</div><div class="ms">colaboradores ativos</div></div>
+          <div class="met"><div class="ml">Precisam folgar</div><div class="mv mv-w" id="m-prec">—</div><div class="ms" id="ms-lim">≥ limite urgente</div></div>
+          <div class="met"><div class="ml">Banco total</div><div class="mv" id="m-banco">—</div><div class="ms">saldo acumulado</div></div>
           <div class="met"><div class="ml">Próximo evento</div><div class="mv mv-o" id="m-prox" style="font-size:16px">—</div><div class="ms" id="m-prox-n">—</div></div>
         </div>
         <div class="card">
@@ -350,30 +350,47 @@ body{font-family:'DM Sans',sans-serif;background:var(--bk);color:var(--wh);font-
 
       <div id="pp-config" class="panel">
         <div class="ph"><div class="pt">Configurações</div></div>
-        <div class="cfg">
+                <div class="cfg">
           <div class="cgt">🔌 Integração Notion</div>
-          <div class="cf" style="max-width:480px;margin-bottom:14px"><label>Token de integração (para sincronizar com todos os gestores)</label><input type="password" id="cfg-tk" placeholder="secret_xxxxxxxxxxxx"></div>
-          <div style="display:flex;gap:8px">
-            <button class="btn btn-p" onclick="conectarNotion()">Conectar Notion</button>
-            <button class="btn btn-sm" onclick="sincNotion()">↑ Sincronizar lançamentos</button>
+          <div style="font-size:12px;color:var(--wh3);margin-bottom:14px;line-height:1.6">
+            O sistema se conecta ao Notion automaticamente via proxy seguro. Nenhum token necessário aqui — ele fica configurado no Netlify.
           </div>
-          <div class="ninfo">
-            <span>ℹ️</span>
-            <div>
-              Base criada: <code>⏱️ Banco de Horas</code> no Notion<br>
-              Colaboradores: <code>🫂 Colaboradores</code> — Operacional, Ativos<br>
-              Eventos: <code>📡 Eventos</code> — Confirmados / Em Andamento<br>
-              <strong>Sem token:</strong> dados salvos localmente no navegador.
-            </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-p" onclick="sincNotion()">↻ Sincronizar colaboradores e eventos</button>
+            <button class="btn btn-sm" onclick="enviarLancamentos()">↑ Enviar lançamentos ao Notion</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr;gap:10px;max-width:560px;margin-top:14px">
+            <div class="cf"><label>ID — Base de Colaboradores</label><input type="text" id="cfg-id-colabs" placeholder="3140d85775f7808cb7a2fbf080bd2df2" oninput="S.idColabs=this.value;salvarEstado()"><div class="cfh">Filtra: Departamento = Operacional, Status = Ativo</div></div>
+            <div class="cf"><label>ID — Base de Eventos</label><input type="text" id="cfg-id-eventos" placeholder="25c0d85775f7805d864ae1f46e8dea82" oninput="S.idEventos=this.value;salvarEstado()"><div class="cfh">Filtra: Status = Confirmado ou Em Andamento</div></div>
+            <div class="cf"><label>ID — Base de Lançamentos</label><input type="text" id="cfg-id-banco" placeholder="b6607b1caa7f4769af94f538170d6094" oninput="S.idBanco=this.value;salvarEstado()"><div class="cfh">Onde os lançamentos de folgas e horas são gravados</div></div>
           </div>
         </div>
         <div class="cfg">
-          <div class="cgt">⚙️ Parâmetros</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:500px">
-            <div class="cf"><label>Jornada padrão (h/dia)</label><input type="number" id="cfg-jn" value="8" min="4" max="12"><div class="cfh">Horas descontadas ao registrar folga</div></div>
-            <div class="cf"><label>Gatilho de folga (h extras)</label><input type="number" id="cfg-lm" value="8" min="1" max="24"><div class="cfh">A partir de quando aparece sugestão</div></div>
+          <div class="cgt">⚙️ Parâmetros operacionais</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:560px;margin-bottom:14px">
+            <div class="cf"><label>Jornada padrão (h/dia)</label><input type="number" id="cfg-jn" value="8" min="4" max="12"><div class="cfh">Horas de um expediente completo</div></div>
+            <div class="cf"><label>Meio expediente (h)</label><input type="number" id="cfg-meio" value="4" min="1" max="12" step="0.5"><div class="cfh">Horas descontadas no meio expediente</div></div>
           </div>
-          <button class="btn btn-p btn-sm" onclick="salvarParams()" style="margin-top:14px">Salvar parâmetros</button>
+          <div class="cgt" style="font-size:13px;margin-bottom:10px">🚦 Parâmetros de status de urgência</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;max-width:600px;margin-bottom:6px">
+            <div class="cf">
+              <label>Regular — até (h)</label>
+              <input type="number" id="cfg-lim-regular" value="4" min="0" max="100" step="0.5">
+              <div class="cfh" style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:var(--green);display:inline-block"></span>Verde</div>
+            </div>
+            <div class="cf">
+              <label>Atenção — até (h)</label>
+              <input type="number" id="cfg-lim-atencao" value="8" min="0" max="100" step="0.5">
+              <div class="cfh" style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:var(--amber);display:inline-block"></span>Amarelo</div>
+            </div>
+            <div class="cf">
+              <label>Urgente — acima de (h)</label>
+              <input type="number" id="cfg-lim-urgente" value="8" min="0" max="100" step="0.5" readonly style="opacity:.6">
+              <div class="cfh" style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:var(--red);display:inline-block"></span>Vermelho — calculado automaticamente</div>
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--wh3);margin-bottom:14px">Exemplo: Regular = 0–4h, Atenção = 4–8h, Urgente = acima de 8h</div>
+          <button class="btn btn-p btn-sm" onclick="salvarParams()">Salvar parâmetros</button>
         </div>
         <div class="cfg">
           <div class="cgt">👤 Usuários</div>
@@ -397,6 +414,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bk);color:var(--wh);font-
   <div class="modal">
     <div class="mt2" id="mod-t">Registrar folga</div>
     <div class="ms2" id="mod-s"></div>
+    <div style="display:flex;gap:8px;margin-bottom:1.2rem">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;padding:8px 14px;border-radius:var(--r);border:.5px solid var(--br2);flex:1;background:var(--bk3)" id="opt-meio">
+        <input type="radio" name="tipo-folga" value="meio" style="accent-color:var(--red)"> Meio expediente
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;padding:8px 14px;border-radius:var(--r);border:.5px solid var(--br2);flex:1;background:var(--bk3)" id="opt-int">
+        <input type="radio" name="tipo-folga" value="inteiro" checked style="accent-color:var(--red)"> Expediente inteiro
+      </label>
+    </div>
     <div class="ma"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-p" onclick="confirmFolga()">Confirmar folga</button></div>
   </div>
 </div>
@@ -415,12 +440,16 @@ const PAL = [
 
 // ── Estado persistido ────────────────────────────────
 function carregarEstado() {
-  try { const s=localStorage.getItem('firma_go_v1'); if(s) return JSON.parse(s); } catch(e){}
-  return { jorn:8, lim:8, colabs:[], eventos:[], historico:[], notionTk:'',
+  try { const s=localStorage.getItem('firma_go_v2'); if(s) return JSON.parse(s); } catch(e){}
+  return { jorn:8, meio:4, limRegular:4, limAtencao:8, colabs:[], eventos:[], historico:[],
+           idColabs:'3140d85775f7808cb7a2fbf080bd2df2',
+           idEventos:'25c0d85775f7805d864ae1f46e8dea82',
+           idBanco:'b6607b1caa7f4769af94f538170d6094',
            users:[{u:'admin',p:'admin123',name:'Administrador',role:'admin'}],
+           whColabs:'', whEventos:'',
            tmPendente:null, eqPendente:[] };
 }
-function salvarEstado() { try { localStorage.setItem('firma_go_v1', JSON.stringify(S)); } catch(e){} }
+function salvarEstado() { try { localStorage.setItem('firma_go_v2', JSON.stringify(S)); } catch(e){} }
 
 let S = carregarEstado();
 let CU = null;
@@ -436,9 +465,19 @@ function doLogin() {
   document.getElementById('u-lb').textContent=f.name||f.u;
   document.getElementById('u-av').textContent=(f.name||f.u)[0].toUpperCase();
   document.getElementById('lerr').style.display='none';
-  if(S.notionTk){document.getElementById('cfg-tk').value=S.notionTk;document.getElementById('n-st').textContent='● Notion conectado';document.getElementById('n-st').className='npill np-ok';}
-  document.getElementById('cfg-jn').value=S.jorn;
-  document.getElementById('cfg-lm').value=S.lim;
+  
+  document.getElementById('cfg-jn').value = S.jorn;
+  document.getElementById('cfg-meio').value = S.meio||4;
+  document.getElementById('cfg-lim-regular').value = S.limRegular||4;
+  document.getElementById('cfg-lim-atencao').value = S.limAtencao||8;
+  document.getElementById('cfg-lim-urgente').value = S.limAtencao||8;
+  document.getElementById('cfg-id-colabs').value = S.idColabs||'3140d85775f7808cb7a2fbf080bd2df2';
+  document.getElementById('cfg-id-eventos').value = S.idEventos||'25c0d85775f7805d864ae1f46e8dea82';
+  document.getElementById('cfg-id-banco').value = S.idBanco||'b6607b1caa7f4769af94f538170d6094';
+  // Mostrar config só para admin
+  const isAdmin = CU?.role==='admin' || CU?.u==='admin';
+  document.getElementById('ni-config').style.display = isAdmin ? 'flex' : 'none';
+  document.getElementById('ns-sistema').style.display = isAdmin ? 'block' : 'none';
   renderColabs(); renderCal(); renderFolgas();
   if(S.notionTk) loadEventos();
 }
@@ -468,8 +507,16 @@ function sit(n,el){
 function ini(s){return s.trim().split(/\s+/).slice(0,2).map(n=>n[0]).join('').toUpperCase();}
 function fmtD(s){if(!s)return'—';const d=new Date(s);return isNaN(d)?s:d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'});}
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
-function getSt(h){if(h>=S.lim)return{l:'Urgente',c:'b-r'};if(h>=4)return{l:'Atenção',c:'b-a'};return{l:'Regular',c:'b-g'};}
-function bColor(h){return h>=S.lim?'var(--red)':h>=4?'var(--amber)':'var(--green)';}
+function getSt(h){
+  const lA=S.limAtencao||8, lR=S.limRegular||4;
+  if(h>=lA)return{l:'Urgente',c:'b-r'};
+  if(h>=lR)return{l:'Atenção',c:'b-a'};
+  return{l:'Regular',c:'b-g'};
+}
+function bColor(h){
+  const lA=S.limAtencao||8, lR=S.limRegular||4;
+  return h>=lA?'var(--red)':h>=lR?'var(--amber)':'var(--green)';
+}
 
 // Converte valor de célula Excel para minutos do dia
 function toMin(v){
@@ -697,11 +744,13 @@ function renderColabs(){
 }
 
 function updMets(){
-  const urg=S.colabs.filter(c=>c.horas>=S.lim),tot=S.colabs.reduce((a,c)=>a+(c.horas||0),0);
+  const urg=S.colabs.filter(c=>c.horas>=(S.limAtencao||8)),tot=S.colabs.reduce((a,c)=>a+(c.horas||0),0);
   document.getElementById('m-tot').textContent=S.colabs.length||'—';
   document.getElementById('m-prec').textContent=urg.length||'0';
   document.getElementById('m-banco').textContent=tot>0?tot.toFixed(0)+'h':'—';
   document.getElementById('badge-f').textContent=urg.length;
+  const msLim=document.getElementById('ms-lim');
+  if(msLim)msLim.textContent=`≥ ${S.limAtencao||8}h (urgente)`;
   const modo=S.notionTk?'Sincronizado com Notion':'Salvo localmente';
   document.getElementById('psub').textContent=`${new Date().toLocaleDateString('pt-BR')} · ${modo}`;
   const prx=S.eventos.filter(e=>e.data&&new Date(e.data)>=new Date()).sort((a,b)=>new Date(a.data)-new Date(b.data))[0];
@@ -737,7 +786,7 @@ function renderEventos(){
 
 function renderFolgas(){
   const grid=document.getElementById('fgrid');
-  const urg=S.colabs.filter(c=>c.horas>=S.lim).sort((a,b)=>b.horas-a.horas);
+  const urg=S.colabs.filter(c=>c.horas>=(S.limAtencao||8)).sort((a,b)=>b.horas-a.horas);
   if(!urg.length){grid.innerHTML='<div class="empty" style="grid-column:1/-1">✅ Nenhum colaborador precisa de folga no momento.</div>';return;}
   const hj=new Date();
   const dts=new Set(S.eventos.filter(e=>e.status==='Confirmado'||e.status==='Em Andamento - Produtora').map(e=>e.data?.split('T')[0]).filter(Boolean));
@@ -776,66 +825,105 @@ function renderHist(){
 let _pi=null,_pd='';
 function openModal(idx,dia){
   _pi=idx;_pd=dia||'próximo dia disponível';
-  const c=S.colabs[idx],novo=Math.max(0,(c.horas||0)-S.jorn);
+  const c=S.colabs[idx];
+  // Reset radio para expediente inteiro
+  document.querySelectorAll('input[name="tipo-folga"]').forEach(r=>r.checked=r.value==='inteiro');
+  atualizarResumoFolga();
   document.getElementById('mod-t').textContent=`Registrar folga — ${c.nome}`;
-  document.getElementById('mod-s').textContent=`Dia sugerido: ${_pd}\nHoras a descontar: ${S.jorn}h\nSaldo atual: ${(c.horas||0).toFixed(1)}h → Novo saldo: ${novo.toFixed(1)}h`;
   document.getElementById('modal').classList.add('open');
 }
+function atualizarResumoFolga(){
+  if(_pi===null)return;
+  const c=S.colabs[_pi];
+  const tipo=document.querySelector('input[name="tipo-folga"]:checked')?.value||'inteiro';
+  const desconto=tipo==='meio'?(S.meio||4):(S.jorn||8);
+  const novo=Math.max(0,(c.horas||0)-desconto);
+  document.getElementById('mod-s').textContent=`Dia sugerido: ${_pd}\nTipo: ${tipo==='meio'?'Meio expediente':'Expediente inteiro'} (${desconto}h)\nSaldo atual: ${(c.horas||0).toFixed(1)}h → Novo saldo: ${novo.toFixed(1)}h`;
+}
 function closeModal(){document.getElementById('modal').classList.remove('open');_pi=null;}
+// Atualiza resumo quando muda tipo de folga
+document.addEventListener('change', e => {
+  if(e.target.name==='tipo-folga') atualizarResumoFolga();
+});
 function confirmFolga(){
   if(_pi===null)return;
-  const c=S.colabs[_pi],d=Math.min(c.horas||0,S.jorn);
+  const c=S.colabs[_pi];
+  const tipo=document.querySelector('input[name="tipo-folga"]:checked')?.value||'inteiro';
+  const desconto=tipo==='meio'?(S.meio||4):(S.jorn||8);
+  const d=Math.min(c.horas||0,desconto);
   c.horas=Math.max(0,(c.horas||0)-d);c.ultima_folga=_pd;
-  const entry={tipo:'folga',colab:c.nome,desc:`Folga em ${_pd}`,data:new Date().toLocaleDateString('pt-BR'),delta:-d,gestor:CU?.name||'—',ts:Date.now()};
+  const entry={tipo:'folga',colab:c.nome,desc:`Folga em ${_pd} (${tipo==='meio'?'meio expediente':'expediente inteiro'})`,data:new Date().toLocaleDateString('pt-BR'),delta:-d,gestor:CU?.name||'—',ts:Date.now()};
   S.historico.push(entry);salvarEstado();closeModal();
   toast(`🌴 Folga de ${c.nome} registrada!`);
   renderColabs();renderFolgas();renderHist();
   if(S.notionTk)sincLancamento(entry);
 }
 
-// ── Notion ───────────────────────────────────────────
-async function nFetch(path,body){
-  // Usa o proxy Netlify — resolve CORS sem expor o token no HTML
-  try{
-    const r=await fetch('/notion/'+path,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(body)
+// ── Integração Notion via proxy Netlify ──────────────
+// O proxy fica em /.netlify/functions/notion-proxy
+// e passa as chamadas para a API do Notion usando o token seguro
+async function nProxy(path, body={}) {
+  try {
+    const r = await fetch(`/.netlify/functions/notion-proxy?path=${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
     });
-    if(!r.ok)return null;
+    if (!r.ok) throw new Error(`Proxy retornou ${r.status}`);
     return await r.json();
-  }catch(e){return null;}
+  } catch(e) {
+    console.error('Proxy error:', e);
+    return null;
+  }
 }
-async function conectarNotion(){
-  toast('🔄 Conectando ao Notion...');
-  S.notionTk='via-proxy';salvarEstado();
-  const r=await nFetch(`databases/${N_COLABS}/query`,{filter:{and:[{property:'Status do Colaborador',select:{equals:'Ativo'}},{property:'Departamento',select:{equals:'Operacional'}}]},page_size:50});
-  if(!r){toast('❌ Falha. Verifique o token e permissões.');return;}
-  let novos=0;
-  for(const p of(r.results||[])){const pr=p.properties||{},nm=pr['Nome']?.title?.[0]?.plain_text||'';if(!nm)continue;if(!S.colabs.find(c=>c.nome===nm)){S.colabs.push({nome:nm,funcao:pr['Função']?.select?.name||'—',dept:'Operacional',horas:0,ultima_folga:null});novos++;}}
-  salvarEstado();
-  document.getElementById('n-st').textContent='● Notion conectado';document.getElementById('n-st').className='npill np-ok';
-  toast(`✅ Notion conectado! ${novos} novos colaboradores.`);renderColabs();
-  await loadEventos();
+
+async function sincNotion() {
+  toast('🔄 Buscando dados do Notion...');
+  // Colaboradores
+  const rc = await nProxy('get_colaboradores');
+  if (rc?.colaboradores) {
+    let novos = 0;
+    for (const c of rc.colaboradores) {
+      if (!S.colabs.find(x => x.nome === c.nome)) {
+        S.colabs.push({ nome:c.nome, funcao:c.funcao||'—', dept:'Operacional', horas:0, ultima_folga:null });
+        novos++;
+      }
+    }
+    salvarEstado();
+    document.getElementById('n-st').textContent = '● Notion conectado';
+    document.getElementById('n-st').className = 'npill np-ok';
+    toast(`✅ ${novos} novos colaboradores · ${rc.colaboradores.length} no total`);
+    renderColabs();
+  } else {
+    toast('❌ Erro ao buscar colaboradores. Verifique o NOTION_TOKEN no Netlify.');
+    return;
+  }
+  // Eventos
+  const re = await nProxy('get_eventos');
+  if (re?.eventos) {
+    S.eventos = re.eventos;
+    salvarEstado();
+    renderEventos(); renderFolgas(); renderCal(); updMets();
+    toast(`✅ ${S.eventos.length} eventos carregados do Notion!`);
+  }
 }
-async function loadEventos(){
-  if(!S.notionTk)return;
-  const r=await nFetch(`databases/${N_EVENTOS}/query`,{filter:{or:[{property:'Status do Evento',select:{equals:'Confirmado'}},{property:'Status do Evento',select:{equals:'Em Andamento - Produtora'}}]},sorts:[{property:'Data do Evento',direction:'ascending'}],page_size:30});
-  if(!r)return;
-  S.eventos=(r.results||[]).map(p=>{const pr=p.properties||{};return{nome:pr['Evento']?.title?.[0]?.plain_text||'—',data:pr['Data do Evento']?.date?.start||null,montagem:pr['Montagem']?.date?.start||null,desmontagem:pr['Desmontagem']?.date?.start||null,status:pr['Status do Evento']?.select?.name||'—'};});
-  salvarEstado();renderEventos();renderFolgas();renderCal();updMets();
-  toast(`✅ ${S.eventos.length} eventos carregados!`);
+
+async function sincLancamento(h) {
+  await nProxy('gravar_lancamento', h);
 }
-async function sincLancamento(h){
-  if(!S.notionTk)return;
-  await nFetch('pages',{parent:{database_id:N_BANCO},properties:{'Colaborador':{title:[{text:{content:h.colab}}]},'Tipo':{select:{name:h.tipo==='folga'?'Folga':'Horas Trabalhadas'}},'Horas':{number:Math.abs(h.delta||0)},'Evento':{rich_text:[{text:{content:h.desc||''}}]},'Data':{date:{start:new Date().toISOString().split('T')[0]}},'Gestor Responsável':{rich_text:[{text:{content:h.gestor||'—'}}]}}});
-}
-async function sincNotion(){
-  if(!S.notionTk){toast('⚠️ Configure o token Notion primeiro');return;}
-  toast('🔄 Sincronizando...');let ok=0;
-  for(const h of S.historico.slice(-20)){await sincLancamento(h);ok++;}
+
+async function enviarLancamentos() {
+  toast('🔄 Enviando lançamentos ao Notion...');
+  let ok = 0;
+  for (const h of S.historico.slice(-20)) {
+    const r = await nProxy('gravar_lancamento', h);
+    if (r?.ok) ok++;
+  }
   toast(`✅ ${ok} lançamentos enviados ao Notion!`);
 }
+
+async function conectarNotion() { await sincNotion(); }
+async function loadEventos() {}
 
 // ── Config ───────────────────────────────────────────
 // ── Importar sincronização offline ───────────────────
@@ -903,7 +991,19 @@ function renderUsers(){document.getElementById('ulist').innerHTML=S.users.map((u
 function addUser(){S.users.push({u:'',p:'',name:'',role:'user'});renderUsers();}
 function rmUser(i){if(S.users.length<=1){toast('⚠️ Mínimo 1 usuário');return;}S.users.splice(i,1);renderUsers();}
 function saveUsers(){salvarEstado();renderUsers();toast('✅ Usuários salvos!');}
-function salvarParams(){S.jorn=+document.getElementById('cfg-jn').value||8;S.lim=+document.getElementById('cfg-lm').value||8;salvarEstado();toast('✅ Parâmetros salvos!');renderColabs();renderFolgas();}
+function salvarParams(){
+  S.jorn = +document.getElementById('cfg-jn').value||8;
+  S.meio = +document.getElementById('cfg-meio').value||4;
+  S.limRegular = +document.getElementById('cfg-lim-regular').value||4;
+  S.limAtencao = +document.getElementById('cfg-lim-atencao').value||8;
+  document.getElementById('cfg-lim-urgente').value = S.limAtencao;
+  S.idColabs = document.getElementById('cfg-id-colabs').value.trim()||'3140d85775f7808cb7a2fbf080bd2df2';
+  S.idEventos = document.getElementById('cfg-id-eventos').value.trim()||'25c0d85775f7805d864ae1f46e8dea82';
+  S.idBanco   = document.getElementById('cfg-id-banco').value.trim()||'b6607b1caa7f4769af94f538170d6094';
+  salvarEstado();
+  toast('✅ Parâmetros salvos!');
+  renderColabs();renderFolgas();
+}
 function limparDados(){if(!confirm('Apagar todos os dados locais?'))return;S.colabs=[];S.historico=[];S.eventos=[];S.tmPendente=null;S.eqPendente=[];salvarEstado();renderColabs();renderHist();renderFolgas();renderCal();toast('🗑️ Dados removidos.');}
 
 renderUsers();
