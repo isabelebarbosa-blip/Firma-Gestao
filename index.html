@@ -479,7 +479,8 @@ function doLogin() {
   document.getElementById('ni-config').style.display = isAdmin ? 'flex' : 'none';
   document.getElementById('ns-sistema').style.display = isAdmin ? 'block' : 'none';
   renderColabs(); renderCal(); renderFolgas();
-  if(S.notionTk) loadEventos();
+  // Sincronização automática ao entrar no sistema
+  sincNotion();
 }
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('ls').style.display!=='none')doLogin();});
 function doLogout(){CU=null;document.getElementById('app').style.display='none';document.getElementById('ls').style.display='flex';document.getElementById('l-p').value='';}
