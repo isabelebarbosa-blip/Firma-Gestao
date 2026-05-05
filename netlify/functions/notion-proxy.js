@@ -51,10 +51,17 @@ exports.handler = async function(event) {
 
     // ── GET_EVENTOS ────────────────────────────────
     if (path === 'get_eventos') {
+      // Primeiro dia do mês atual
+      const hoje = new Date();
+      const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
+
       const data = await nPost(TOKEN, `databases/${EVENTOS_DB}/query`, {
-        filter: { or: [
-          { property: 'Status do Evento', select: { equals: 'Confirmado' } },
-          { property: 'Status do Evento', select: { equals: 'Em Andamento - Produtora' } }
+        filter: { and: [
+          { or: [
+            { property: 'Status do Evento', select: { equals: 'Confirmado' } },
+            { property: 'Status do Evento', select: { equals: 'Em Andamento - Produtora' } }
+          ]},
+          { property: 'Data do Evento', date: { on_or_after: inicioMes } }
         ]},
         sorts: [{ property: 'Data do Evento', direction: 'ascending' }],
         page_size: 50
