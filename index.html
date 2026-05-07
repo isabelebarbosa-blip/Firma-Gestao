@@ -533,52 +533,76 @@ function toMin(v){
 }
 
 // ── Parser T&M no formato real da Firma ──────────────
-// Estrutura: linha 1 = título (T&M - NOME EVENTO DATA), linha 2 = cabeçalho, dados nas linhas seguintes
 // Colunas: DATA(0) INFORM(1) LOCAL(2) HORÁRIO(3) HORÁRIO FIM(4) ATIVIDADE(5) DURAÇÃO(6) OBS(7)
-// Lógica: pega entrada mais cedo e saída mais tarde por dia, apenas linhas onde OBS contém FIRMA
+// Lógica de horas extras:
+//   - Dias de semana: conta apenas horas FORA do expediente comercial (antes 09h e depois 18h)
+//   - Finais de semana: conta TUDO (dia inteiro é considerado extra)
 function parseTM(wb){
   const ws=wb.Sheets[wb.SheetNames[0]];
   const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:false});
   const raw2=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
   let eventoNome='';
-  const dias={};
+  const dias={};   // diaStr -> {ini, fim, date}
 
   for(let i=0;i<raw.length;i++){
     const row=raw[i],row2=raw2[i];
-    // Título do bloco
     if(row[0]&&typeof row[0]==='string'&&row[0].startsWith('T&M')){
-      if(!eventoNome){
-        eventoNome=row[0].replace(/^T&M\s*-\s*/i,'').replace(/\d{2}\/\d{2}.*$/,'').trim();
-      }
+      if(!eventoNome) eventoNome=row[0].replace(/^T&M\s*-\s*/i,'').replace(/\d{2}\/\d{2}.*$/,'').trim();
       continue;
     }
-    // Cabeçalho
     if(row[0]&&typeof row[0]==='string'&&row[0].toUpperCase().includes('DATA'))continue;
-    // OBS deve conter FIRMA
     const obs=row[7]?String(row[7]).toUpperCase():'';
     if(!obs.includes('FIRMA'))continue;
-    // Data
-    let diaStr=null;
+    let diaStr=null, dateObj=null;
     const dv=row2[0];
     if(typeof dv==='number'){
       const d=XLSX.SSF.parse_date_code(dv);
-      if(d)diaStr=`${String(d.d).padStart(2,'0')}/${String(d.m).padStart(2,'0')}/${d.y}`;
+      if(d){ diaStr=`${String(d.d).padStart(2,'0')}/${String(d.m).padStart(2,'0')}/${d.y}`; dateObj=new Date(d.y,d.m-1,d.d); }
     }else if(row[0]){
       const d=new Date(row[0]);
-      if(!isNaN(d))diaStr=d.toLocaleDateString('pt-BR');
-      else if(typeof row[0]==='string'&&row[0].includes('/'))diaStr=row[0].trim().split(' ')[0];
+      if(!isNaN(d)){ diaStr=d.toLocaleDateString('pt-BR'); dateObj=d; }
+      else if(typeof row[0]==='string'&&row[0].includes('/')){
+        diaStr=row[0].trim().split(' ')[0];
+        const parts=diaStr.split('/');
+        if(parts.length===3) dateObj=new Date(parts[2],parts[1]-1,parts[0]);
+      }
     }
     if(!diaStr)continue;
-    // Horários
     let iniMin=toMin(row2[3]),fimMin=toMin(row2[4]);
     if(iniMin==null&&row[3])iniMin=toMin(row[3]);
     if(fimMin==null&&row[4])fimMin=toMin(row[4]);
     if(iniMin==null||fimMin==null)continue;
     if(fimMin<iniMin)fimMin+=24*60;
-    if(!dias[diaStr])dias[diaStr]={ini:iniMin,fim:fimMin};
+    if(!dias[diaStr])dias[diaStr]={ini:iniMin,fim:fimMin,date:dateObj};
     else{dias[diaStr].ini=Math.min(dias[diaStr].ini,iniMin);dias[diaStr].fim=Math.max(dias[diaStr].fim,fimMin);}
   }
   return{eventoNome,dias};
+}
+
+// Calcula horas extras considerando expediente comercial 09h–18h
+// Dias úteis: apenas horas fora do expediente contam
+// Finais de semana: tudo conta
+function calcHorasExtras(dias){
+  const EXP_INI = 9*60;   // 09:00 em minutos
+  const EXP_FIM = 18*60;  // 18:00 em minutos
+  let totalMin = 0;
+
+  Object.entries(dias).forEach(([diaStr, v]) => {
+    const isFimDeSemana = v.date && (v.date.getDay()===0 || v.date.getDay()===6);
+    if(isFimDeSemana){
+      // Final de semana — conta tudo
+      totalMin += (v.fim - v.ini);
+    } else {
+      // Dia útil — conta apenas fora do expediente 09h–18h
+      const ini = v.ini, fim = v.fim;
+      // Horas antes das 09h
+      if(ini < EXP_INI) totalMin += Math.min(fim, EXP_INI) - ini;
+      // Horas depois das 18h
+      if(fim > EXP_FIM) totalMin += fim - Math.max(ini, EXP_FIM);
+    }
+  });
+
+  return totalMin / 60;
 }
 
 // ── Handler T&M ──────────────────────────────────────
@@ -590,9 +614,7 @@ function handleTM(inp){
       const wb=XLSX.read(e.target.result,{type:'array',cellDates:false});
       const{eventoNome,dias}=parseTM(wb);
       if(!Object.keys(dias).length){toast('⚠️ Nenhuma linha FIRMA com horários encontrada. Verifique se a coluna OBS contém "FIRMA".');return;}
-      let totalMin=0;
-      Object.values(dias).forEach(d=>totalMin+=(d.fim-d.ini));
-      const totalH=totalMin/60;
+      const totalH = calcHorasExtras(dias);
       S.tmPendente={eventoNome,dias,totalH};
       const prev=document.getElementById('tm-prev');
       document.getElementById('tm-prev-t').textContent=eventoNome||'Evento';
@@ -605,7 +627,8 @@ function handleTM(inp){
         const fS=`${String(Math.floor(v.fim/60)).padStart(2,'0')}:${String(v.fim%60).padStart(2,'0')}`;
         html+=`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:.5px solid var(--br);font-size:12px"><span style="color:var(--wh3)">${dia} · ${iS} → ${fS}</span><span style="font-family:'DM Mono',monospace;color:var(--green)">${h.toFixed(1)}h</span></div>`;
       });
-      html+=`<div style="display:flex;justify-content:space-between;padding:8px 0 0;font-weight:600;font-size:13px"><span>Total por colaborador</span><span style="font-family:'DM Mono',monospace;color:var(--red);font-size:16px">${totalH.toFixed(1)}h</span></div></div>`;
+      html+=`<div style="display:flex;justify-content:space-between;padding:8px 0 0;font-weight:600;font-size:13px;border-top:.5px solid var(--br);margin-top:4px"><span>Horas extras por colaborador</span><span style="font-family:'DM Mono',monospace;color:var(--red);font-size:16px">${totalH.toFixed(1)}h</span></div>`;
+      html+=`<div style="font-size:11px;color:var(--wh3);margin-top:6px">⏱ Dias úteis: apenas horas fora de 09h–18h · Fins de semana: jornada completa</div></div>`;
       html+=`<div style="font-size:12px;color:var(--wh3);padding:0 2px">Agora importe a lista de equipe na aba <strong>👥 Lista de Equipe</strong> — cada colaborador da lista receberá ${totalH.toFixed(1)}h no banco.</div>`;
       document.getElementById('tm-prev-b').innerHTML=html;
       atualizarBotaoTM();
