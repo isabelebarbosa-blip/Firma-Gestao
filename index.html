@@ -243,7 +243,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bk);color:var(--wh);font-
 
     <main class="main">
       <div id="pp-painel" class="panel active">
-        <div class="ph"><div class="pt">Painel operacional</div><div class="pst" id="psub">—</div></div>
+        <div class="ph" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px">
+          <div><div class="pt">Painel operacional</div><div class="pst" id="psub">—</div></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-sm" onclick="gerarRelatorioIndividual()">👤 Extrato individual</button>
+            <button class="btn btn-sm" onclick="gerarRelatorioFolgas()">🌴 Folgas concedidas</button>
+            <button class="btn btn-sm" onclick="gerarRelatorioCarga()">📊 Carga por colaborador</button>
+          </div>
+        </div>
         <div class="mets">
           <div class="met"><div class="ml">Colaboradores</div><div class="mv" id="m-tot">—</div><div class="ms">colaboradores ativos</div></div>
           <div class="met"><div class="ml">Precisam folgar</div><div class="mv mv-w" id="m-prec">—</div><div class="ms" id="ms-lim">≥ limite urgente</div></div>
@@ -1615,6 +1622,291 @@ function registrarFaltaDia(){
   const aviso=c.horas<0?` ⚠️ Saldo negativo: ${c.horas.toFixed(1)}h`:'';
   toast(`❌ Falta de ${nome} registrada — ${horas.toFixed(1)}h descontadas.${aviso}`);
   renderColabs();renderHist();
+}
+
+// ══ RELATÓRIOS ═══════════════════════════════════════
+
+// ── Estilos comuns dos relatórios ────────────────────
+function estilosRelatorio(){
+  return `
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',sans-serif;background:#f5f5f5;color:#111;padding:2rem;max-width:900px;margin:0 auto}
+    .header{display:flex;align-items:center;gap:14px;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:2px solid #E8271A}
+    .logo{font-size:28px;font-weight:800;letter-spacing:-1px;font-family:inherit}
+    .logo span{color:#E8271A}
+    .header-info h1{font-size:20px;font-weight:700;margin-bottom:3px}
+    .header-info .sub{font-size:12px;color:#666}
+    .resumo{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:1.5rem}
+    .met{background:#fff;border-radius:8px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+    .met-label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#888;margin-bottom:6px;font-weight:600}
+    .met-val{font-size:22px;font-weight:700}
+    .card{background:#fff;border-radius:10px;padding:20px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+    .card-title{font-size:14px;font-weight:600;margin-bottom:12px;color:#333;border-bottom:1px solid #f0f0f0;padding-bottom:8px}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th{text-align:left;padding:7px 10px;background:#f5f5f5;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#555;font-weight:600}
+    td{padding:8px 10px;border-bottom:1px solid #f5f5f5;vertical-align:middle}
+    tr:last-child td{border-bottom:none}
+    .pos{color:#27ae60;font-weight:600;font-family:monospace}
+    .neg{color:#E8271A;font-weight:600;font-family:monospace}
+    .badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;text-transform:uppercase}
+    .b-r{background:#fce8e8;color:#991f1f}
+    .b-a{background:#fef3cd;color:#664d03}
+    .b-g{background:#d4edda;color:#155724}
+    .empty{text-align:center;padding:2rem;color:#999;font-size:13px;background:#fff;border-radius:8px}
+    .print-btn{padding:10px 20px;background:#E8271A;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;margin-top:1.5rem;float:right}
+    @media print{body{background:#fff;padding:1rem}.print-btn{display:none}}
+    .avatar{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;margin-right:8px;vertical-align:middle}
+  </style>`;
+}
+
+function abrirRelatorio(html){
+  const win=window.open('','_blank');
+  win.document.write(html);
+  win.document.close();
+}
+
+function cabecalhoRelatorio(titulo, subtitulo){
+  return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>${titulo} — Firma Produções</title>${estilosRelatorio()}</head><body>
+  <div class="header">
+    <div class="logo">FIRMA<span>.</span></div>
+    <div class="header-info"><h1>${titulo}</h1><div class="sub">${subtitulo} · Gerado em ${new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'})} · por ${CU?.name||CU?.u||'—'}</div></div>
+  </div>`;
+}
+
+// ── Relatório 1: Extrato individual ──────────────────
+function gerarRelatorioIndividual(){
+  if(!S.colabs.length){ toast('⚠️ Nenhum colaborador cadastrado'); return; }
+
+  // Pede qual colaborador via prompt
+  const nomes = S.colabs.map((c,i)=>`${i+1}. ${c.nome} (${(c.horas||0).toFixed(1)}h)`).join('\n');
+  const escolha = prompt(`Selecione o número do colaborador:\n\n${nomes}`);
+  if(!escolha) return;
+  const idx = parseInt(escolha)-1;
+  if(isNaN(idx)||idx<0||idx>=S.colabs.length){ toast('⚠️ Número inválido'); return; }
+  const colab = S.colabs[idx];
+
+  // Filtrar histórico do colaborador
+  const hist = (S.historico||[]).filter(h=>h.colab===colab.nome);
+  const horasTrab = hist.filter(h=>h.tipo==='work').reduce((a,h)=>a+(h.delta||0),0);
+  const horasFolga = hist.filter(h=>h.tipo==='folga').reduce((a,h)=>a+Math.abs(h.delta||0),0);
+  const horasFalta = hist.filter(h=>h.tipo==='falta').reduce((a,h)=>a+Math.abs(h.delta||0),0);
+  const eventos = [...new Set(hist.filter(h=>h.tipo==='work').map(h=>h.desc.split('—')[0].trim()))];
+
+  const PAL_COLABS=[['#1E3A5F','#60A5FA'],['#1A3A2A','#4ADE80'],['#3A1A1A','#F87171'],['#3A2A1A','#FBBF24'],['#2A1A3A','#A78BFA'],['#1A3A38','#2DD4BF'],['#3A1A2E','#F472B6'],['#2A3A1A','#86EFAC']];
+  const [bg,fg]=PAL_COLABS[idx%PAL_COLABS.length];
+
+  let html = cabecalhoRelatorio(`Extrato Individual — ${colab.nome}`, `Departamento: ${colab.dept||'Operacional'} · Função: ${colab.funcao||'—'}`);
+
+  html += `<div class="resumo">
+    <div class="met"><div class="met-label">Saldo atual</div><div class="met-val" style="color:${(colab.horas||0)<0?'#E8271A':'#27ae60'}">${(colab.horas||0).toFixed(1)}h</div></div>
+    <div class="met"><div class="met-label">Horas trabalhadas</div><div class="met-val">${horasTrab.toFixed(1)}h</div></div>
+    <div class="met"><div class="met-label">Folgas tiradas</div><div class="met-val">${horasFolga.toFixed(1)}h</div></div>
+    <div class="met"><div class="met-label">Faltas</div><div class="met-val" style="color:${horasFalta>0?'#E8271A':'inherit'}">${horasFalta.toFixed(1)}h</div></div>
+    <div class="met"><div class="met-label">Eventos</div><div class="met-val">${eventos.length}</div></div>
+    <div class="met"><div class="met-label">Última folga</div><div class="met-val" style="font-size:14px">${colab.ultima_folga||'—'}</div></div>
+  </div>`;
+
+  html += `<div class="card"><div class="card-title">Movimentação completa</div>`;
+  if(!hist.length){
+    html += `<div class="empty">Nenhum lançamento registrado</div>`;
+  } else {
+    html += `<table><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Horas</th><th>Gestor</th></tr>`;
+    [...hist].reverse().forEach(h=>{
+      const icone = h.tipo==='folga'?'🌴':h.tipo==='falta'?'❌':'📋';
+      const badgeCls = h.tipo==='folga'?'b-g':h.tipo==='falta'?'b-r':'b-a';
+      const badgeTxt = h.tipo==='folga'?'Folga':h.tipo==='falta'?'Falta':'Horas';
+      html+=`<tr>
+        <td>${h.data}</td>
+        <td><span class="badge ${badgeCls}">${icone} ${badgeTxt}</span></td>
+        <td>${h.desc}</td>
+        <td class="${(h.delta||0)>=0?'pos':'neg'}">${(h.delta||0)>=0?'+':''}${(h.delta||0).toFixed(1)}h</td>
+        <td style="color:#888;font-size:11px">${h.gestor||'—'}</td>
+      </tr>`;
+    });
+    html += `</table>`;
+  }
+  html += `</div>`;
+  html += `<button class="print-btn" onclick="window.print()">🖨️ Imprimir / PDF</button></body></html>`;
+  abrirRelatorio(html);
+}
+
+// ── Relatório 4: Folgas concedidas ───────────────────
+function gerarRelatorioFolgas(){
+  // Filtro de período via prompt
+  const opcao = prompt('Período do relatório:\n1. Mês atual\n2. Últimos 3 meses\n3. Tudo\n\nDigite 1, 2 ou 3:');
+  if(!opcao) return;
+
+  const hoje = new Date();
+  let dataLimite = null;
+  let periodoLabel = '';
+  if(opcao==='1'){
+    dataLimite = new Date(hoje.getFullYear(), hoje.getMonth(), 1).getTime();
+    periodoLabel = hoje.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+  } else if(opcao==='2'){
+    dataLimite = new Date(hoje.getFullYear(), hoje.getMonth()-2, 1).getTime();
+    periodoLabel = 'Últimos 3 meses';
+  } else {
+    periodoLabel = 'Todo o histórico';
+  }
+
+  const folgas = (S.historico||[]).filter(h=>{
+    if(h.tipo!=='folga') return false;
+    if(!dataLimite) return true;
+    return (h.ts||0) >= dataLimite;
+  });
+
+  let html = cabecalhoRelatorio('Relatório de Folgas Concedidas', periodoLabel);
+
+  html += `<div class="resumo">
+    <div class="met"><div class="met-label">Total de folgas</div><div class="met-val">${folgas.length}</div></div>
+    <div class="met"><div class="met-label">Colaboradores</div><div class="met-val">${[...new Set(folgas.map(f=>f.colab))].length}</div></div>
+    <div class="met"><div class="met-label">Horas descontadas</div><div class="met-val">${folgas.reduce((a,f)=>a+Math.abs(f.delta||0),0).toFixed(1)}h</div></div>
+  </div>`;
+
+  if(!folgas.length){
+    html += `<div class="empty">Nenhuma folga registrada no período</div>`;
+  } else {
+    html += `<div class="card"><div class="card-title">Detalhamento por colaborador</div><table>
+      <tr><th>Colaborador</th><th>Data da folga</th><th>Tipo</th><th>Horas desc.</th><th>Gestor</th><th>Registro</th></tr>`;
+    [...folgas].sort((a,b)=>a.colab.localeCompare(b.colab)).forEach(f=>{
+      const tipo = f.desc.includes('meio')? 'Meio exp.' : 'Exp. inteiro';
+      html += `<tr>
+        <td><strong>${f.colab}</strong></td>
+        <td>${f.desc.match(/\d{2}\/\d{2}\/\d{4}/)?.[0]||'—'}</td>
+        <td><span class="badge b-g">${tipo}</span></td>
+        <td class="neg">-${Math.abs(f.delta||0).toFixed(1)}h</td>
+        <td style="color:#888;font-size:11px">${f.gestor||'—'}</td>
+        <td style="color:#888;font-size:11px">${f.data}</td>
+      </tr>`;
+    });
+    html += `</table></div>`;
+
+    // Resumo por colaborador
+    const porColab = {};
+    folgas.forEach(f=>{
+      if(!porColab[f.colab]) porColab[f.colab]={qtd:0,horas:0};
+      porColab[f.colab].qtd++;
+      porColab[f.colab].horas+=Math.abs(f.delta||0);
+    });
+    html += `<div class="card"><div class="card-title">Resumo por colaborador</div><table>
+      <tr><th>Colaborador</th><th>Folgas tiradas</th><th>Total horas desc.</th><th>Saldo atual</th></tr>`;
+    Object.entries(porColab).sort((a,b)=>b[1].qtd-a[1].qtd).forEach(([nome,v])=>{
+      const colab = S.colabs.find(c=>c.nome===nome);
+      const saldo = colab?(colab.horas||0):null;
+      html+=`<tr>
+        <td><strong>${nome}</strong></td>
+        <td>${v.qtd} folga(s)</td>
+        <td class="neg">-${v.horas.toFixed(1)}h</td>
+        <td class="${saldo!==null?(saldo<0?'neg':'pos'):''}"> ${saldo!==null?saldo.toFixed(1)+'h':'—'}</td>
+      </tr>`;
+    });
+    html += `</table></div>`;
+  }
+
+  html += `<button class="print-btn" onclick="window.print()">🖨️ Imprimir / PDF</button></body></html>`;
+  abrirRelatorio(html);
+}
+
+// ── Relatório 6: Carga por colaborador ───────────────
+function gerarRelatorioCarga(){
+  if(!S.colabs.length){ toast('⚠️ Nenhum colaborador cadastrado'); return; }
+
+  const opcao = prompt('Período do relatório:\n1. Mês atual\n2. Últimos 3 meses\n3. Tudo\n\nDigite 1, 2 ou 3:');
+  if(!opcao) return;
+
+  const hoje = new Date();
+  let dataLimite = null;
+  let periodoLabel = '';
+  if(opcao==='1'){
+    dataLimite = new Date(hoje.getFullYear(), hoje.getMonth(), 1).getTime();
+    periodoLabel = hoje.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+  } else if(opcao==='2'){
+    dataLimite = new Date(hoje.getFullYear(), hoje.getMonth()-2, 1).getTime();
+    periodoLabel = 'Últimos 3 meses';
+  } else {
+    periodoLabel = 'Todo o histórico';
+  }
+
+  // Agrupar lançamentos de trabalho por colaborador
+  const porColab = {};
+  (S.historico||[]).filter(h=>{
+    if(h.tipo!=='work') return false;
+    if(!dataLimite) return true;
+    return (h.ts||0) >= dataLimite;
+  }).forEach(h=>{
+    if(!porColab[h.colab]) porColab[h.colab]={nome:h.colab,eventos:new Set(),horas:0,lancamentos:[]};
+    const ev = h.desc.split('—')[0].trim();
+    porColab[h.colab].eventos.add(ev);
+    porColab[h.colab].horas += (h.delta||0);
+    porColab[h.colab].lancamentos.push(h);
+  });
+
+  const lista = Object.values(porColab).sort((a,b)=>b.horas-a.horas);
+  const totalHoras = lista.reduce((a,c)=>a+c.horas,0);
+  const mediaHoras = lista.length ? totalHoras/lista.length : 0;
+
+  let html = cabecalhoRelatorio('Carga por Colaborador', periodoLabel);
+
+  html += `<div class="resumo">
+    <div class="met"><div class="met-label">Colaboradores ativos</div><div class="met-val">${lista.length}</div></div>
+    <div class="met"><div class="met-label">Total de horas</div><div class="met-val">${totalHoras.toFixed(1)}h</div></div>
+    <div class="met"><div class="met-label">Média por pessoa</div><div class="met-val">${mediaHoras.toFixed(1)}h</div></div>
+    <div class="met"><div class="met-label">Eventos distintos</div><div class="met-val">${[...new Set(lista.flatMap(c=>[...c.eventos]))].length}</div></div>
+  </div>`;
+
+  if(!lista.length){
+    html += `<div class="empty">Nenhum lançamento de trabalho no período</div>`;
+  } else {
+    html += `<div class="card"><div class="card-title">Ranking de carga — ${periodoLabel}</div><table>
+      <tr><th>#</th><th>Colaborador</th><th>Eventos</th><th>Horas trabalhadas</th><th>vs. Média</th><th>Saldo atual</th></tr>`;
+
+    lista.forEach((c,i)=>{
+      const colab = S.colabs.find(x=>x.nome===c.nome);
+      const saldo = colab?(colab.horas||0):null;
+      const diff = c.horas - mediaHoras;
+      const difCls = diff>0?'neg':'pos'; // mais que média = mais carga = atenção
+      html += `<tr>
+        <td style="color:#888;font-size:12px">${i+1}º</td>
+        <td><strong>${c.nome}</strong></td>
+        <td style="font-size:12px;color:#666">${c.eventos.size} evento(s)<br><span style="font-size:10px">${[...c.eventos].slice(0,2).join(', ')}${c.eventos.size>2?'...':''}</span></td>
+        <td><strong>${c.horas.toFixed(1)}h</strong>
+          <div style="height:4px;background:#f0f0f0;border-radius:2px;margin-top:4px;width:120px">
+            <div style="height:100%;border-radius:2px;background:#E8271A;width:${Math.min(100,(c.horas/Math.max(...lista.map(x=>x.horas)))*100).toFixed(0)}%"></div>
+          </div>
+        </td>
+        <td class="${difCls}">${diff>=0?'+':''}${diff.toFixed(1)}h</td>
+        <td class="${saldo!==null?(saldo<0?'neg':'pos'):''}"> ${saldo!==null?saldo.toFixed(1)+'h':'—'}</td>
+      </tr>`;
+    });
+    html += `</table></div>`;
+
+    // Detalhe por evento
+    const porEvento = {};
+    lista.forEach(c=>{
+      c.lancamentos.forEach(l=>{
+        const ev = l.desc.split('—')[0].trim();
+        if(!porEvento[ev]) porEvento[ev]={nome:ev,colabs:new Set(),horas:0};
+        porEvento[ev].colabs.add(c.nome);
+        porEvento[ev].horas+=(l.delta||0);
+      });
+    });
+
+    html += `<div class="card"><div class="card-title">Resumo por evento</div><table>
+      <tr><th>Evento</th><th>Colaboradores</th><th>Total horas</th><th>Média por pessoa</th></tr>`;
+    Object.values(porEvento).sort((a,b)=>b.horas-a.horas).forEach(ev=>{
+      html+=`<tr>
+        <td><strong>${ev.nome}</strong></td>
+        <td>${ev.colabs.size} pessoa(s)</td>
+        <td><strong>${ev.horas.toFixed(1)}h</strong></td>
+        <td>${(ev.horas/ev.colabs.size).toFixed(1)}h</td>
+      </tr>`;
+    });
+    html += `</table></div>`;
+  }
+
+  html += `<button class="print-btn" onclick="window.print()">🖨️ Imprimir / PDF</button></body></html>`;
+  abrirRelatorio(html);
 }
 
 function renderUsers(){
