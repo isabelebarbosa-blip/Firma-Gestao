@@ -234,6 +234,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bk);color:var(--wh);font-
       <div class="ni" onclick="gp('eventos',this)"><span>📡</span>Eventos</div>
       <div class="ns">Horas</div>
       <div class="ni" onclick="gp('importar',this)"><span>📋</span>Importar</div>
+      <div class="ni" onclick="gp('faltas',this)"><span>❌</span>Faltas</div>
       <div class="ni" onclick="gp('folgas',this)"><span>🌴</span>Folgas <span class="nib" id="badge-f">0</span></div>
       <div class="ni" onclick="gp('historico',this)"><span>📜</span>Histórico</div>
       <div class="ns" id="ns-sistema" style="display:none">Sistema</div>
@@ -258,7 +259,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bk);color:var(--wh);font-
               <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:var(--green);display:inline-block"></span>Regular</span>
             </div>
           </div>
-          <div class="th g6"><div>Colaborador</div><div>Função</div><div>Saldo</div><div>Status</div><div class="hide">Últ. folga</div><div>Ação</div></div>
+          <div class="th" style="grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr .8fr"><div>Colaborador</div><div>Função</div><div>Saldo</div><div>Status</div><div class="hide">Últ. folga</div><div>Faltas</div><div>Ação</div></div>
           <div id="clist"><div class="empty">Nenhum dado. Importe uma planilha T&M para começar.</div></div>
         </div>
         <div class="card">
@@ -296,7 +297,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bk);color:var(--wh);font-
           <div class="upz" onclick="document.getElementById('f-tm').click()">
             <div style="font-size:32px;margin-bottom:10px">📋</div>
             <div style="font-size:15px;font-weight:500;margin-bottom:5px">Importar Tempos & Movimentos</div>
-            <div style="font-size:12px;color:var(--wh3)">Formato Firma: título na linha 1 · cabeçalho na linha 2 · colunas <strong>DATA · INFORM. · LOCAL · HORÁRIO · HORÁRIO FIM · ATIVIDADE · DURAÇÃO · OBS</strong></div>
+            <div style="font-size:12px;color:var(--wh3)">Formatos aceitos: <strong>.xlsx · .xls · .csv</strong> — Formato Firma: título na linha 1, cabeçalho na linha 2, colunas DATA · HORÁRIO · HORÁRIO FIM · OBS</div>
             <input type="file" id="f-tm" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleTM(this)">
           </div>
           <div class="card">
@@ -319,26 +320,148 @@ body{font-family:'DM Sans',sans-serif;background:var(--bk);color:var(--wh);font-
         </div>
 
         <div id="it-eq" class="ipan">
-          <div class="upz" onclick="document.getElementById('f-eq').click()">
-            <div style="font-size:32px;margin-bottom:10px">👥</div>
-            <div style="font-size:15px;font-weight:500;margin-bottom:5px">Importar Lista de Equipe</div>
-            <div style="font-size:12px;color:var(--wh3)">Arquivo .xlsx — apenas os <strong>nomes dos colaboradores</strong> são lidos (primeira coluna com nomes)</div>
-            <input type="file" id="f-eq" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleEQ(this)">
+
+          <!-- Seleção de modo -->
+          <div style="display:flex;gap:10px;margin-bottom:1.5rem;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;padding:8px 14px;border-radius:var(--r);border:.5px solid var(--br2);background:var(--bk3)">
+              <input type="radio" name="eq-modo" value="arquivo" checked onchange="toggleEQModo()" style="accent-color:var(--red)"> Importar arquivo
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;padding:8px 14px;border-radius:var(--r);border:.5px solid var(--br2);background:var(--bk3)">
+              <input type="radio" name="eq-modo" value="texto" onchange="toggleEQModo()" style="accent-color:var(--red)"> Colar nomes (texto)
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;padding:8px 14px;border-radius:var(--r);border:.5px solid var(--br2);background:var(--bk3)">
+              <input type="radio" name="eq-modo" value="manual" onchange="toggleEQModo()" style="accent-color:var(--red)"> Adicionar manualmente
+            </label>
           </div>
-          <div class="card">
-            <div class="ch"><span class="ct">Formato esperado — qualquer planilha com nomes</span></div>
-            <div class="th" style="grid-template-columns:1fr 2fr"><div>Nome</div><div>Outras colunas (ignoradas)</div></div>
-            <div class="tr" style="grid-template-columns:1fr 2fr;font-size:12px;color:var(--wh3)"><div>Ana Lima</div><div>Função, cargo, data — qualquer coisa</div></div>
-            <div style="padding:8px 18px;font-size:11px;color:var(--wh3);border-top:.5px solid var(--br)">Somente a <strong>primeira coluna</strong> é lida. O cabeçalho (se existir) é ignorado automaticamente.</div>
+
+          <!-- Modo arquivo -->
+          <div id="eq-arquivo-area">
+            <div class="upz" onclick="document.getElementById('f-eq').click()">
+              <div style="font-size:32px;margin-bottom:10px">👥</div>
+              <div style="font-size:15px;font-weight:500;margin-bottom:5px">Importar Lista de Equipe</div>
+              <div style="font-size:12px;color:var(--wh3)">Formatos aceitos: <strong>.xlsx · .xls · .csv</strong> — apenas os nomes são lidos (primeira coluna)</div>
+              <input type="file" id="f-eq" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleEQ(this)">
+            </div>
           </div>
+
+          <!-- Modo colar texto -->
+          <div id="eq-texto-area" style="display:none">
+            <div class="card" style="margin-bottom:1.5rem">
+              <div class="ch"><span class="ct">Colar lista de nomes</span></div>
+              <div style="padding:16px">
+                <div style="font-size:12px;color:var(--wh3);margin-bottom:10px">Cole os nomes abaixo — um por linha. Funciona com texto copiado de Word, PDF, e-mail ou qualquer fonte.</div>
+                <textarea id="eq-texto" placeholder="Ana Lima&#10;Carlos Mota&#10;Beatriz Nunes&#10;..." style="width:100%;height:160px;padding:10px;border:.5px solid var(--br2);border-radius:var(--r);background:var(--bk3);color:var(--wh);font-size:13px;font-family:inherit;resize:vertical;line-height:1.6"></textarea>
+                <button class="btn btn-p btn-sm" onclick="handleEQTexto()" style="margin-top:10px">Processar lista</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modo manual com horas individuais -->
+          <div id="eq-manual-area" style="display:none">
+            <div class="card" style="margin-bottom:1.5rem">
+              <div class="ch"><span class="ct">Adicionar colaborador manualmente</span></div>
+              <div style="padding:16px">
+                <div style="font-size:12px;color:var(--wh3);margin-bottom:12px">Adicione um colaborador por vez com as horas que ele trabalhou. Pressione Enter ou clique em + Adicionar.</div>
+                <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr auto;gap:10px;align-items:end;margin-bottom:14px">
+                  <div class="cf">
+                    <label>Colaborador</label>
+                    <select id="eq-manual-nome" style="width:100%;padding:9px 11px;border:.5px solid var(--br2);border-radius:var(--r);background:var(--bk3);font-size:13px;font-family:inherit;color:var(--wh)">
+                      <option value="">Selecione...</option>
+                    </select>
+                  </div>
+                  <div class="cf">
+                    <label>Evento</label>
+                    <select id="eq-manual-evento" style="width:100%;padding:9px 11px;border:.5px solid var(--br2);border-radius:var(--r);background:var(--bk3);font-size:13px;font-family:inherit;color:var(--wh)">
+                      <option value="">Selecione...</option>
+                    </select>
+                  </div>
+                  <div class="cf">
+                    <label>Data</label>
+                    <input type="date" id="eq-manual-data" style="width:100%;padding:9px 11px;border:.5px solid var(--br2);border-radius:var(--r);background:var(--bk3);font-size:13px;font-family:inherit;color:var(--wh)">
+                  </div>
+                  <div class="cf">
+                    <label>Horas trabalhadas</label>
+                    <input type="number" id="eq-manual-horas-ind" placeholder="Ex: 12.5" min="0" step="0.5">
+                  </div>
+                  <button class="btn btn-p" onclick="adicionarColabManual()" style="padding:9px 14px;align-self:end">+ Adicionar</button>
+                </div>
+                <div id="eq-manual-lista" style="display:none">
+                  <div class="th" style="grid-template-columns:2fr 1.5fr 1fr 1fr auto"><div>Nome</div><div>Evento</div><div>Data</div><div>Horas</div><div></div></div>
+                  <div id="eq-manual-rows"></div>
+                  <div style="padding:10px 18px;border-top:.5px solid var(--br);display:flex;justify-content:space-between;align-items:center">
+                    <span id="eq-manual-total" style="font-size:12px;color:var(--wh3)">0 colaboradores</span>
+                    <button class="btn btn-p btn-sm" onclick="confirmarEQManual()">Confirmar equipe</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="card" id="eq-prev" style="display:none">
             <div class="ch">
               <span class="ct" id="eq-prev-t">Equipe identificada</span>
-              <button class="btn btn-p btn-sm" onclick="confirmEQ()">Confirmar equipe</button>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:11px;color:var(--wh3)" id="eq-prev-info">Ajuste as horas individualmente se necessário</span>
+                <button class="btn btn-p btn-sm" onclick="confirmEQ()">Confirmar equipe</button>
+              </div>
             </div>
             <div id="eq-prev-b"></div>
           </div>
           <div class="card"><div class="ch"><span class="ct">Importações recentes</span></div><div id="imp-eq"><div class="empty">Nenhuma</div></div></div>
+        </div>
+      </div>
+
+      <div id="pp-faltas" class="panel">
+        <div class="ph" style="display:flex;align-items:flex-start;justify-content:space-between">
+          <div><div class="pt">Registro de faltas</div><div class="pst">Faltas em eventos e no dia a dia — descontadas do saldo</div></div>
+          <button class="btn btn-p btn-sm" onclick="gerarRelatorioFaltas()">📄 Relatório do mês</button>
+        </div>
+
+        <div class="card" style="margin-bottom:1.5rem">
+          <div class="ch"><span class="ct">🗓 Falta em evento</span></div>
+          <div style="padding:16px">
+            <div style="font-size:12px;color:var(--wh3);margin-bottom:12px">Selecione o colaborador e o evento que faltou. As horas do evento serão descontadas do saldo.</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end;max-width:700px">
+              <div class="cf"><label>Colaborador</label>
+                <select id="falta-ev-colab" style="width:100%;padding:9px 11px;border:.5px solid var(--br2);border-radius:var(--r);background:var(--bk3);font-size:13px;font-family:inherit;color:var(--wh)"><option value="">Selecione...</option></select>
+              </div>
+              <div class="cf" style="position:relative">
+                <label>Evento</label>
+                <select id="falta-ev-evento" style="width:100%;padding:9px 11px;border:.5px solid var(--br2);border-radius:var(--r);background:var(--bk3);font-size:13px;font-family:inherit;color:var(--wh)" onchange="toggleFaltaEvOutro()">
+                  <option value="">Selecione o evento...</option>
+                </select>
+                <div id="falta-ev-outro-wrap" style="margin-top:6px;display:none">
+                  <input type="text" id="falta-ev-outro" placeholder="Digite o nome do evento" style="width:100%;padding:9px 11px;border:.5px solid var(--br2);border-radius:var(--r);background:var(--bk3);font-size:13px;font-family:inherit;color:var(--wh)">
+                </div>
+              </div>
+              <div class="cf"><label>Horas a descontar</label>
+                <input type="number" id="falta-ev-horas" placeholder="Ex: 14.5" min="0" step="0.5">
+              </div>
+              <button class="btn btn-p" onclick="registrarFaltaEvento()" style="padding:9px 14px">Registrar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="ch"><span class="ct">📅 Falta no dia a dia</span></div>
+          <div style="padding:16px">
+            <div style="font-size:12px;color:var(--wh3);margin-bottom:12px">Registre a falta de um colaborador num dia específico. As horas da jornada serão descontadas — saldo pode ficar negativo.</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end;max-width:700px">
+              <div class="cf"><label>Colaborador</label>
+                <select id="falta-dia-colab" style="width:100%;padding:9px 11px;border:.5px solid var(--br2);border-radius:var(--r);background:var(--bk3);font-size:13px;font-family:inherit;color:var(--wh)"><option value="">Selecione...</option></select>
+              </div>
+              <div class="cf"><label>Data da falta</label>
+                <input type="date" id="falta-dia-data" style="width:100%;padding:9px 11px;border:.5px solid var(--br2);border-radius:var(--r);background:var(--bk3);font-size:13px;font-family:inherit;color:var(--wh)">
+              </div>
+              <div class="cf"><label>Tipo</label>
+                <select id="falta-dia-tipo" style="width:100%;padding:9px 11px;border:.5px solid var(--br2);border-radius:var(--r);background:var(--bk3);font-size:13px;font-family:inherit;color:var(--wh)">
+                  <option value="dia">Dia inteiro</option>
+                  <option value="meio">Meio período</option>
+                </select>
+              </div>
+              <button class="btn btn-p" onclick="registrarFaltaDia()" style="padding:9px 14px">Registrar</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -418,15 +541,30 @@ body{font-family:'DM Sans',sans-serif;background:var(--bk);color:var(--wh);font-
   <div class="modal">
     <div class="mt2" id="mod-t">Registrar folga</div>
     <div class="ms2" id="mod-s"></div>
+
+    <!-- Tipo de folga -->
     <div style="display:flex;gap:8px;margin-bottom:1.2rem">
-      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;padding:8px 14px;border-radius:var(--r);border:.5px solid var(--br2);flex:1;background:var(--bk3)" id="opt-meio">
-        <input type="radio" name="tipo-folga" value="meio" style="accent-color:var(--red)"> Meio expediente
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;padding:8px 14px;border-radius:var(--r);border:.5px solid var(--br2);flex:1;background:var(--bk3)">
+        <input type="radio" name="tipo-folga" value="meio" style="accent-color:var(--red)" onchange="atualizarResumoFolga()"> Meio expediente
       </label>
-      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;padding:8px 14px;border-radius:var(--r);border:.5px solid var(--br2);flex:1;background:var(--bk3)" id="opt-int">
-        <input type="radio" name="tipo-folga" value="inteiro" checked style="accent-color:var(--red)"> Expediente inteiro
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;padding:8px 14px;border-radius:var(--r);border:.5px solid var(--br2);flex:1;background:var(--bk3)">
+        <input type="radio" name="tipo-folga" value="inteiro" checked style="accent-color:var(--red)" onchange="atualizarResumoFolga()"> Expediente inteiro
       </label>
     </div>
-    <div class="ma"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-p" onclick="confirmFolga()">Confirmar folga</button></div>
+
+    <!-- Data da folga editável -->
+    <div style="margin-bottom:1.2rem">
+      <div style="font-size:10px;font-weight:600;color:var(--wh3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Data da folga</div>
+      <input type="date" id="mod-data-folga" style="width:100%;padding:9px 11px;border:.5px solid var(--br2);border-radius:var(--r);background:var(--bk3);font-size:13px;font-family:inherit;color:var(--wh)" onchange="verificarDataEvento()">
+      <div id="mod-alerta-evento" style="display:none;margin-top:6px;padding:8px 10px;background:rgba(245,158,11,.12);border:.5px solid rgba(245,158,11,.4);border-radius:var(--r);font-size:12px;color:var(--amber)">
+        ⚠️ <span id="mod-alerta-txt"></span>
+      </div>
+    </div>
+
+    <div class="ma">
+      <button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-p" onclick="confirmFolga()">Confirmar folga</button>
+    </div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -485,8 +623,14 @@ function doLogin() {
   renderColabs(); renderCal(); renderFolgas();
   // Sincronização automática ao entrar no sistema
   sincNotion();
+  // Popular selects de falta
+  setTimeout(popularSelectsFalta, 500);
 }
-document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('ls').style.display!=='none')doLogin();});
+document.addEventListener('keydown',e=>{
+  // Enter no campo de nome manual adiciona colaborador
+  if(e.key==='Enter'&&document.getElementById('eq-manual-nome')===document.activeElement){
+    adicionarColabManual(); return;
+  }if(e.key==='Enter'&&document.getElementById('ls').style.display!=='none')doLogin();});
 function doLogout(){CU=null;document.getElementById('app').style.display='none';document.getElementById('ls').style.display='flex';document.getElementById('l-p').value='';}
 
 // ── Nav ──────────────────────────────────────────────
@@ -496,6 +640,7 @@ function gp(n,el){
   document.getElementById('pp-'+n).classList.add('active');
   if(el)el.classList.add('active');
   if(n==='folgas')renderFolgas();
+  if(n==='faltas'){popularSelectsFalta();}
   if(n==='historico')renderHist();
   if(n==='config')renderUsers();
   if(n==='painel'){renderColabs();renderCal();}
@@ -710,19 +855,7 @@ function handleEQ(inp){
   rd.readAsArrayBuffer(inp.files[0]);
 }
 
-function confirmEQ(){
-  if(!S.eqPendente.length)return;
-  let novos=0;
-  S.eqPendente.forEach(n=>{
-    if(!S.colabs.find(c=>c.nome.toLowerCase()===n.toLowerCase())){
-      S.colabs.push({nome:n,funcao:'—',dept:'Operacional',horas:0,ultima_folga:null});novos++;
-    }
-  });
-  salvarEstado();
-  addImpRow('imp-eq',`${S.eqPendente.length} pessoas · ${novos} novas`,'👥');
-  toast(`✅ Equipe salva! ${novos} novos colaboradores.`);
-  renderColabs();atualizarBotaoTM();
-}
+// confirmEQ movido para bloco de novas funções
 
 function confirmTM(){
   const tm=S.tmPendente,eq=S.eqPendente;
@@ -759,14 +892,16 @@ function renderColabs(){
   if(!S.colabs.length){el.innerHTML='<div class="empty">Nenhum dado. Importe T&M e lista de equipe.</div>';updMets();return;}
   updMets();
   el.innerHTML=S.colabs.map((c,i)=>{
-    const[bg,fg]=PAL[i%PAL.length],st=getSt(c.horas),pct=Math.min(100,(c.horas/16)*100);
-    return`<div class="tr g6">
+    const[bg,fg]=PAL[i%PAL.length],st=getSt(c.horas),pct=Math.min(100,(Math.abs(c.horas)/16)*100);
+    const isNeg=(c.horas||0)<0;
+    return`<div class="tr" style="grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr .8fr">
       <div class="cc"><div class="av" style="background:${bg};color:${fg}">${ini(c.nome)}</div><div><div style="font-size:13px;font-weight:500">${c.nome}</div><div style="font-size:11px;color:var(--wh3)">${c.dept||'Operacional'}</div></div></div>
       <div style="font-size:12px;color:var(--wh3)">${c.funcao||'—'}</div>
-      <div><div style="font-size:13px;font-weight:500;font-family:'DM Mono',monospace">${(c.horas||0).toFixed(1)}h</div><div class="bar-bg"><div class="bar-f" style="width:${pct}%;background:${bColor(c.horas)}"></div></div></div>
+      <div><div style="font-size:13px;font-weight:500;font-family:'DM Mono',monospace;color:${isNeg?'#F87171':'inherit'}">${isNeg?'':''}${(c.horas||0).toFixed(1)}h${isNeg?' ⚠️':''}</div><div class="bar-bg"><div class="bar-f" style="width:${pct}%;background:${isNeg?'var(--red)':bColor(c.horas)}"></div></div></div>
       <div><span class="badge ${st.c}">${st.l}</span></div>
       <div class="hide" style="font-size:12px;color:var(--wh3)">${c.ultima_folga||'—'}</div>
-      <div>${c.horas>=S.lim?`<button class="btn btn-sm" onclick="openModal(${S.colabs.indexOf(c)})">Folga</button>`:'<span style="font-size:11px;color:var(--wh3)">—</span>'}</div>
+      <div style="font-size:12px;text-align:center">${(c.faltas||0)>0?`<span style="color:#F87171;font-weight:500">${c.faltas||0}</span>`:'<span style="color:var(--wh3)">0</span>'}</div>
+      <div>${(c.horas||0)>=S.lim?`<button class="btn btn-sm" onclick="openModal(${S.colabs.indexOf(c)})">Folga</button>`:'<span style="font-size:11px;color:var(--wh3)">—</span>'}</div>
     </div>`;
   }).join('');
 }
@@ -787,7 +922,20 @@ function updMets(){
 
 function renderCal(){
   const g=document.getElementById('cal'),hj=new Date();hj.setHours(0,0,0,0);
-  const dts=new Set(S.eventos.filter(e=>e.status==='Confirmado'||e.status==='Em Andamento - Produtora').map(e=>e.data?.split('T')[0]).filter(Boolean));
+  // Calendário usa intervalo montagem→desmontagem
+  const datasOcupadasCal = new Set();
+  S.eventos.filter(e=>e.status==='Confirmado'||e.status==='Em Andamento - Produtora').forEach(e=>{
+    const dataEv  = e.data?.split('T')[0];
+    const montagem = e.montagem?.split('T')[0];
+    const desmont  = e.desmontagem?.split('T')[0];
+    const inicio = montagem || dataEv;
+    const fim    = desmont  || dataEv;
+    if(!inicio) return;
+    let cur = new Date(inicio+'T12:00:00');
+    const end = new Date((fim||inicio)+'T12:00:00');
+    while(cur <= end){ datasOcupadasCal.add(cur.toISOString().split('T')[0]); cur.setDate(cur.getDate()+1); }
+  });
+  const dts = datasOcupadasCal;
   const st=new Date(hj);st.setDate(1);
   let c='';for(let i=0;i<st.getDay();i++)c+=`<div class="cc2 c-e"></div>`;
   const dm=new Date(st.getFullYear(),st.getMonth()+2,0).getDate();
@@ -817,11 +965,31 @@ function renderFolgas(){
   const urg=S.colabs.filter(c=>c.horas>=(S.limAtencao||8)).sort((a,b)=>b.horas-a.horas);
   if(!urg.length){grid.innerHTML='<div class="empty" style="grid-column:1/-1">✅ Nenhum colaborador precisa de folga no momento.</div>';return;}
   const hj=new Date();
-  const dts=new Set(S.eventos.filter(e=>e.status==='Confirmado'||e.status==='Em Andamento - Produtora').map(e=>e.data?.split('T')[0]).filter(Boolean));
+  // Monta conjunto de datas ocupadas considerando montagem→desmontagem
+  const datasOcupadas = new Set();
+  S.eventos.filter(e=>e.status==='Confirmado'||e.status==='Em Andamento - Produtora').forEach(e=>{
+    const dataEv  = e.data?.split('T')[0];
+    const montagem = e.montagem?.split('T')[0];
+    const desmont  = e.desmontagem?.split('T')[0];
+    // Usa intervalo montagem→desmontagem se disponível, senão só a data do evento
+    const inicio = montagem || dataEv;
+    const fim    = desmont  || dataEv;
+    if(!inicio) return;
+    // Preenche todos os dias do intervalo
+    let cur = new Date(inicio+'T12:00:00');
+    const end = new Date((fim||inicio)+'T12:00:00');
+    while(cur <= end){
+      datasOcupadas.add(cur.toISOString().split('T')[0]);
+      cur.setDate(cur.getDate()+1);
+    }
+  });
   const lv=[];
-  for(let i=1;i<=45;i++){
+  for(let i=1;i<=60;i++){
     const d=new Date(hj);d.setDate(hj.getDate()+i);
-    if(d.getDay()!==0&&d.getDay()!==6){const ds=d.toISOString().split('T')[0];lv.push({date:ds,label:d.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'}),livre:!dts.has(ds)});}
+    if(d.getDay()!==0&&d.getDay()!==6){
+      const ds=d.toISOString().split('T')[0];
+      lv.push({date:ds,label:d.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'}),livre:!datasOcupadas.has(ds)});
+    }
     if(lv.length>=14)break;
   }
   grid.innerHTML=urg.map((c,i)=>{
@@ -843,7 +1011,7 @@ function renderHist(){
   if(!S.historico.length){el.innerHTML='<div class="empty">Nenhum lançamento ainda</div>';return;}
   el.innerHTML=[...S.historico].reverse().map(h=>`
     <div class="hi">
-      <div class="hic ${h.tipo==='folga'?'hf':'hw'}">${h.tipo==='folga'?'🌴':'📋'}</div>
+      <div class="hic ${h.tipo==='folga'?'hf':h.tipo==='falta'?'hf':'hw'}" style="${h.tipo==='falta'?'background:rgba(232,39,26,.12)':''}">${h.tipo==='folga'?'🌴':h.tipo==='falta'?'❌':'📋'}</div>
       <div class="hii"><div class="hit">${h.colab} — ${h.desc}</div><div class="him">${h.data} · por <strong>${h.gestor||'—'}</strong></div></div>
       <div class="${(h.delta||0)>0?'dp':(h.delta||0)<0?'dn':'dz'}">${(h.delta||0)>0?'+':''}${(h.delta||0).toFixed(1)}h</div>
     </div>`).join('');
@@ -852,13 +1020,63 @@ function renderHist(){
 // ── Modal ────────────────────────────────────────────
 let _pi=null,_pd='';
 function openModal(idx,dia){
-  _pi=idx;_pd=dia||'próximo dia disponível';
+  _pi=idx;_pd=dia||'';
   const c=S.colabs[idx];
   // Reset radio para expediente inteiro
   document.querySelectorAll('input[name="tipo-folga"]').forEach(r=>r.checked=r.value==='inteiro');
+  // Preencher data sugerida no campo editável
+  const campoData = document.getElementById('mod-data-folga');
+  if(campoData){
+    // Converter label "seg, 15/05" para ISO date se possível
+    let dataISO = '';
+    if(dia && dia !== 'próximo dia disponível'){
+      // Tenta converter "seg, 15/05" para ISO
+      const hoje = new Date();
+      const partes = dia.replace(/[a-z]+,\s*/i,'').split('/');
+      if(partes.length >= 2){
+        const d = partes[0].trim().padStart(2,'0');
+        const m = partes[1].trim().padStart(2,'0');
+        const a = partes[2]||String(hoje.getFullYear());
+        dataISO = `${a}-${m}-${d}`;
+      }
+    }
+    campoData.value = dataISO;
+    _pd = dataISO || dia || '';
+  }
+  // Limpar alerta
+  document.getElementById('mod-alerta-evento').style.display='none';
   atualizarResumoFolga();
   document.getElementById('mod-t').textContent=`Registrar folga — ${c.nome}`;
   document.getElementById('modal').classList.add('open');
+}
+
+function verificarDataEvento(){
+  const campo = document.getElementById('mod-data-folga');
+  const alerta = document.getElementById('mod-alerta-evento');
+  const alertaTxt = document.getElementById('mod-alerta-txt');
+  if(!campo||!alerta) return;
+  _pd = campo.value; // atualiza data selecionada
+  const ds = campo.value; // YYYY-MM-DD
+  if(!ds){ alerta.style.display='none'; return; }
+  // Verificar se existe evento nessa data
+  const evento = S.eventos.find(e=>{
+    if(!e.data && !e.montagem) return false;
+    const dataEv  = e.data?.split('T')[0];
+    const monDs   = e.montagem?.split('T')[0];
+    const desDs   = e.desmontagem?.split('T')[0];
+    // Verifica intervalo completo montagem→desmontagem
+    const inicio = monDs || dataEv;
+    const fim    = desDs || dataEv;
+    if(!inicio) return false;
+    return ds >= inicio && ds <= (fim||inicio);
+  });
+  if(evento){
+    alertaTxt.textContent=`Esta data coincide com o evento "${evento.nome}". Deseja prosseguir mesmo assim?`;
+    alerta.style.display='block';
+  } else {
+    alerta.style.display='none';
+  }
+  atualizarResumoFolga();
 }
 function atualizarResumoFolga(){
   if(_pi===null)return;
@@ -866,7 +1084,10 @@ function atualizarResumoFolga(){
   const tipo=document.querySelector('input[name="tipo-folga"]:checked')?.value||'inteiro';
   const desconto=tipo==='meio'?(S.meio||4):(S.jorn||8);
   const novo=Math.max(0,(c.horas||0)-desconto);
-  document.getElementById('mod-s').textContent=`Dia sugerido: ${_pd}\nTipo: ${tipo==='meio'?'Meio expediente':'Expediente inteiro'} (${desconto}h)\nSaldo atual: ${(c.horas||0).toFixed(1)}h → Novo saldo: ${novo.toFixed(1)}h`;
+  const campoData=document.getElementById('mod-data-folga');
+  const dataAtual=campoData?.value||_pd||'—';
+  const dataFmt=dataAtual&&dataAtual!=='—'?new Date(dataAtual+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'}):dataAtual;
+  document.getElementById('mod-s').textContent=`Data: ${dataFmt}\nTipo: ${tipo==='meio'?'Meio expediente':'Expediente inteiro'} (${desconto}h)\nSaldo atual: ${(c.horas||0).toFixed(1)}h → Novo saldo: ${novo.toFixed(1)}h`;
 }
 function closeModal(){document.getElementById('modal').classList.remove('open');_pi=null;}
 // Atualiza resumo quando muda tipo de folga
@@ -879,8 +1100,13 @@ function confirmFolga(){
   const tipo=document.querySelector('input[name="tipo-folga"]:checked')?.value||'inteiro';
   const desconto=tipo==='meio'?(S.meio||4):(S.jorn||8);
   const d=Math.min(c.horas||0,desconto);
-  c.horas=Math.max(0,(c.horas||0)-d);c.ultima_folga=_pd;
-  const entry={tipo:'folga',colab:c.nome,desc:`Folga em ${_pd} (${tipo==='meio'?'meio expediente':'expediente inteiro'})`,data:new Date().toLocaleDateString('pt-BR'),delta:-d,gestor:CU?.name||'—',ts:Date.now()};
+  // Pega a data do campo editável
+  const campoData=document.getElementById('mod-data-folga');
+  const dataFolga=campoData?.value||_pd||new Date().toISOString().split('T')[0];
+  const dataFmt=dataFolga?new Date(dataFolga+'T12:00:00').toLocaleDateString('pt-BR'):new Date().toLocaleDateString('pt-BR');
+  c.horas=Math.max(0,(c.horas||0)-d);
+  c.ultima_folga=dataFmt;
+  const entry={tipo:'folga',colab:c.nome,desc:`Folga em ${dataFmt} (${tipo==='meio'?'meio expediente':'expediente inteiro'})`,data:new Date().toLocaleDateString('pt-BR'),delta:-d,gestor:CU?.name||'—',ts:Date.now()};
   S.historico.push(entry);salvarEstado();closeModal();
   toast(`🌴 Folga de ${c.nome} registrada!`);
   renderColabs();renderFolgas();renderHist();
@@ -1013,6 +1239,382 @@ function handleSync(inp){
     }catch(err){toast('❌ Erro ao ler arquivo: '+err.message);}
   };
   rd.readAsText(inp.files[0]);
+}
+
+// ── Toggle T&M modo ──────────────────────────────────
+function toggleTMModo(){
+  const modo = document.querySelector('input[name="tm-modo"]:checked')?.value;
+  document.getElementById('tm-arquivo-area').style.display = modo==='arquivo' ? 'block' : 'none';
+  document.getElementById('tm-manual-area').style.display  = modo==='nao_aplica' ? 'block' : 'none';
+}
+
+// ── T&M manual (não se aplica) ────────────────────────
+function confirmarTMManual(){
+  const evento = document.getElementById('tm-manual-evento').value.trim();
+  const horas  = parseFloat(document.getElementById('tm-manual-horas').value);
+  if(!evento){ toast('⚠️ Informe o nome do evento'); return; }
+  if(!horas||horas<=0){ toast('⚠️ Informe as horas extras'); return; }
+  S.tmPendente = { eventoNome:evento, dias:{}, totalH:horas, manual:true };
+  // Mostra prévia
+  document.getElementById('tm-prev-t').textContent = evento;
+  document.getElementById('tm-prev').style.display = 'block';
+  document.getElementById('tm-prev-b').innerHTML = `
+    <div style="background:var(--bk3);border-radius:var(--r);padding:14px 16px;margin-bottom:12px">
+      <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:8px">📋 ${evento}</div>
+      <div style="font-size:12px;color:var(--wh3)">Horas inseridas manualmente — sem T&M de referência</div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0 0;font-weight:600;font-size:13px;border-top:.5px solid var(--br);margin-top:8px">
+        <span>Horas extras por colaborador</span>
+        <span style="font-family:'DM Mono',monospace;color:var(--red);font-size:16px">${horas.toFixed(1)}h</span>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--wh3)">Importe a lista de equipe na aba 👥 Lista de Equipe para confirmar.</div>`;
+  atualizarBotaoTM();
+  toast(`✅ ${horas.toFixed(1)}h configuradas. Agora importe a equipe.`);
+}
+
+// ── Toggle equipe modo ────────────────────────────────
+function toggleEQModo(){
+  const modo = document.querySelector('input[name="eq-modo"]:checked')?.value;
+  document.getElementById('eq-arquivo-area').style.display = modo==='arquivo' ? 'block' : 'none';
+  document.getElementById('eq-texto-area').style.display   = modo==='texto'   ? 'block' : 'none';
+  document.getElementById('eq-manual-area').style.display  = modo==='manual'  ? 'block' : 'none';
+  // Popular datalist com colaboradores já cadastrados
+  if(modo==='manual'){
+    // Popular select de colaboradores
+    const selColab = document.getElementById('eq-manual-nome');
+    if(selColab && selColab.tagName==='SELECT'){
+      selColab.innerHTML = '<option value="">Selecione...</option>'+
+        S.colabs.map(c=>`<option value="${c.nome}">${c.nome}</option>`).join('');
+    }
+    // Popular select de eventos
+    const selEv = document.getElementById('eq-manual-evento');
+    if(selEv){
+      selEv.innerHTML = '<option value="">Selecione o evento...</option>'+
+        S.eventos.map(e=>`<option value="${e.nome}">${e.nome}${e.data?' ('+fmtD(e.data)+')':''}</option>`).join('')+
+        '<option value="__outro__">— Outro (digitar)</option>';
+    }
+  }
+}
+
+// ── Equipe via texto colado ───────────────────────────
+function handleEQTexto(){
+  const raw = document.getElementById('eq-texto').value;
+  if(!raw.trim()){ toast('⚠️ Cole os nomes antes de processar'); return; }
+  const HEADERS = ['NOME','COLABORADOR','EQUIPE','PARTICIPANTE','TÉCNICO','TECNICO','FUNÇÃO','FUNCAO'];
+  const nomes = [], ignorados = [];
+  raw.split('\n').forEach(linha => {
+    const s = linha.trim();
+    if(!s || s.length < 3) return;
+    if(HEADERS.includes(s.toUpperCase())) return;
+    // Ignora freelancers
+    if(s.toUpperCase().includes('FREELANCER')){ ignorados.push(s); return; }
+    nomes.push(s);
+  });
+  if(!nomes.length){ toast('⚠️ Nenhum nome encontrado'); return; }
+  processarNomesEQ(nomes, ignorados, 'texto colado');
+}
+
+// ── Processa nomes da equipe (comum a arquivo e texto) ──
+function processarNomesEQ(nomes, ignorados, fonte){
+  S.eqPendente = nomes;
+  salvarEstado();
+  const totalH = S.tmPendente?.totalH || 0;
+  document.getElementById('eq-prev-t').textContent = `${nomes.length} colaboradores — ${fonte}`;
+  document.getElementById('eq-prev').style.display = 'block';
+  const existentes = S.colabs.map(c=>c.nome.toLowerCase());
+  let ok=0, novos=0;
+  let html = `<div class="th" style="grid-template-columns:2fr 1fr 1fr"><div>Nome</div><div>Status</div><div>Horas a receber</div></div>`;
+  html += nomes.map((n,i) => {
+    const ex = existentes.find(e=>e.includes(n.split(' ')[0].toLowerCase()));
+    if(ex) ok++; else novos++;
+    return `<div class="tr" style="grid-template-columns:2fr 1fr 1fr;align-items:center">
+      <div style="font-weight:500">${n}</div>
+      <div style="font-size:11px;color:${ex?'var(--green)':'var(--amber)'}">${ex?'✓ Cadastrado':'+ Novo'}</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input type="range" min="0" max="${totalH>0?totalH*2:24}" step="0.5" value="${totalH.toFixed(1)}"
+          id="eq-h-${i}" oninput="document.getElementById('eq-hv-${i}').textContent=parseFloat(this.value).toFixed(1)+'h'"
+          style="width:80px;accent-color:var(--red)">
+        <span id="eq-hv-${i}" style="font-family:'DM Mono',monospace;font-size:12px;min-width:36px">${totalH.toFixed(1)}h</span>
+      </div>
+    </div>`;
+  }).join('');
+  if(ignorados.length) html += `<div style="padding:8px 18px;font-size:11px;color:var(--wh3);border-top:.5px solid var(--br)">🚫 ${ignorados.length} freelancer(s) ignorado(s): ${ignorados.join(', ')}</div>`;
+  html += `<div style="padding:10px 18px;font-size:11px;color:var(--wh3);border-top:.5px solid var(--br)">${ok} já cadastrados · ${novos} novos${totalH>0?` · base de ${totalH.toFixed(1)}h (ajustável individualmente)`:''}</div>`;
+  document.getElementById('eq-prev-b').innerHTML = html;
+  atualizarBotaoTM();
+  const msg = ignorados.length ? `✅ ${nomes.length} Firma · ${ignorados.length} freelancer(s) ignorados` : `✅ ${nomes.length} nomes processados`;
+  toast(msg);
+}
+
+// ── Equipe manual — estado temporário ────────────────
+let _eqManualList = []; // [{nome, horas}]
+
+function adicionarColabManual(){
+  const sel    = document.getElementById('eq-manual-nome');
+  const nome   = sel.tagName==='SELECT' ? sel.options[sel.selectedIndex]?.text||'' : sel.value.trim();
+  const horas  = parseFloat(document.getElementById('eq-manual-horas-ind').value)||0;
+  const selEv  = document.getElementById('eq-manual-evento');
+  const evento = selEv ? (selEv.value||'') : '';
+  const data   = document.getElementById('eq-manual-data')?.value||'';
+  if(!nome||nome==='Selecione...'){ toast('⚠️ Selecione o colaborador'); return; }
+  if(horas<=0){ toast('⚠️ Informe as horas trabalhadas'); return; }
+  if(_eqManualList.find(x=>x.nome===nome)){
+    toast('⚠️ Colaborador já adicionado na lista'); return;
+  }
+  _eqManualList.push({nome, horas, evento, data});
+  renderEQManualLista();
+  document.getElementById('eq-manual-nome').selectedIndex=0;
+  document.getElementById('eq-manual-horas-ind').value='';
+}
+
+function renderEQManualLista(){
+  const rows = document.getElementById('eq-manual-rows');
+  const lista = document.getElementById('eq-manual-lista');
+  const total = document.getElementById('eq-manual-total');
+  if(!_eqManualList.length){ lista.style.display='none'; return; }
+  lista.style.display='block';
+  rows.innerHTML = _eqManualList.map((c,i)=>`
+    <div class="tr" style="grid-template-columns:2fr 1.5fr 1fr 1fr auto;font-size:13px">
+      <div style="font-weight:500">${c.nome}</div>
+      <div style="font-size:11px;color:var(--wh3)">${c.evento||'—'}</div>
+      <div style="font-size:11px;color:var(--wh3)">${c.data?new Date(c.data+'T12:00:00').toLocaleDateString('pt-BR'):'—'}</div>
+      <div style="font-family:'DM Mono',monospace;color:var(--green)">${c.horas.toFixed(1)}h</div>
+      <button class="btn btn-sm" onclick="_eqManualList.splice(${i},1);renderEQManualLista()" style="color:#F87171;border-color:rgba(232,39,26,.3);padding:3px 8px">✕</button>
+    </div>`).join('');
+  total.textContent = `${_eqManualList.length} colaborador(es) · ${_eqManualList.reduce((a,c)=>a+c.horas,0).toFixed(1)}h total`;
+}
+
+async function confirmarEQManual(){
+  if(!_eqManualList.length){ toast('⚠️ Adicione ao menos um colaborador'); return; }
+  let novos=0;
+  for(const item of _eqManualList){
+    let c = S.colabs.find(x=>x.nome.toLowerCase()===item.nome.toLowerCase());
+    if(!c){
+      c = {nome:item.nome, funcao:'—', dept:'Operacional', horas:0, ultima_folga:null, faltas:0};
+      S.colabs.push(c);
+      novos++;
+    }
+    // Adiciona as horas diretamente (sem T&M pendente)
+    c.horas = Math.round(((c.horas||0)+item.horas)*10)/10;
+    const dataFmt = item.data ? new Date(item.data+'T12:00:00').toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR');
+    const entry = {tipo:'work', colab:item.nome, desc:`${item.evento||'Lançamento manual'} — ${item.horas.toFixed(1)}h`, data:dataFmt, delta:item.horas, gestor:CU?.name||'—', ts:Date.now()};
+    S.historico.push(entry);
+    if(S.notionTk||S.whColabs) sincLancamento(entry);
+  }
+  salvarEstado();
+  addImpRow('imp-eq', `${_eqManualList.length} pessoas · lançamento manual · ${novos} novas`, '👥');
+  toast(`✅ ${_eqManualList.length} colaboradores com horas lançadas!`);
+  _eqManualList=[];
+  renderEQManualLista();
+  renderColabs(); renderFolgas();
+}
+
+// ── Confirmar equipe ──────────────────────────────────
+function confirmEQ(){
+  if(!S.eqPendente.length) return;
+  let novos=0;
+  S.eqPendente.forEach((n,i) => {
+    if(!S.colabs.find(c=>c.nome.toLowerCase()===n.toLowerCase())){
+      S.colabs.push({nome:n,funcao:'—',dept:'Operacional',horas:0,ultima_folga:null,faltas:0});
+      novos++;
+    }
+  });
+  salvarEstado();
+  addImpRow('imp-eq',`${S.eqPendente.length} pessoas · ${novos} novas`,'👥');
+  toast(`✅ Equipe salva! ${novos} novos colaboradores.`);
+  renderColabs(); atualizarBotaoTM();
+  popularSelectsFalta();
+}
+
+// ── confirmTM com horas individuais ──────────────────
+function confirmTM(){
+  const tm=S.tmPendente,eq=S.eqPendente;
+  if(!tm||!eq.length){toast('⚠️ Importe T&M e lista de equipe antes de confirmar');return;}
+  eq.forEach((n,i) => {
+    // Verifica se há slider individual
+    const sliderEl = document.getElementById('eq-h-'+i);
+    const horas = sliderEl ? parseFloat(sliderEl.value)||0 : tm.totalH;
+    let c=S.colabs.find(x=>x.nome.toLowerCase()===n.toLowerCase());
+    if(!c){c={nome:n,funcao:'—',dept:'Operacional',horas:0,ultima_folga:null,faltas:0};S.colabs.push(c);}
+    c.horas=Math.round(((c.horas||0)+horas)*10)/10;
+    const entry={tipo:'work',colab:n,desc:`${tm.eventoNome} — ${horas.toFixed(1)}h`,data:new Date().toLocaleDateString('pt-BR'),delta:horas,gestor:CU?.name||'—',ts:Date.now()};
+    S.historico.push(entry);
+    if(S.notionTk||S.whColabs)sincLancamento(entry);
+  });
+  salvarEstado();
+  S.tmPendente=null;S.eqPendente=[];
+  document.getElementById('tm-prev').style.display='none';
+  document.getElementById('eq-prev').style.display='none';
+  const totalEq = eq.length;
+  addImpRow('imp-tm',`${totalEq} colaboradores — horas individuais aplicadas`,'📋');
+  toast(`✅ Horas distribuídas para ${totalEq} colaboradores!`);
+  renderColabs();renderFolgas();
+}
+
+// ── Faltas ────────────────────────────────────────────
+function popularSelectsFalta(){
+  // Colaboradores
+  ['falta-ev-colab','falta-dia-colab'].forEach(id=>{
+    const sel=document.getElementById(id);
+    if(!sel)return;
+    const val=sel.value;
+    sel.innerHTML='<option value="">Selecione...</option>'+
+      S.colabs.map(c=>`<option value="${c.nome}">${c.nome}</option>`).join('');
+    sel.value=val;
+  });
+  // Eventos — sem limitação de mês, todos os sincronizados
+  const selEv=document.getElementById('falta-ev-evento');
+  if(selEv){
+    const val=selEv.value;
+    const opts = S.eventos.length
+      ? S.eventos.map(e=>`<option value="${e.nome}">${e.nome}${e.data?' ('+fmtD(e.data)+')':''}</option>`).join('')
+      : '';
+    selEv.innerHTML='<option value="">Selecione o evento...</option>'+opts+
+      '<option value="__outro__">— Outro (digitar)</option>';
+    if(val) selEv.value=val;
+  }
+}
+
+// ── Gerador de relatório de faltas ───────────────────
+function gerarRelatorioFaltas(){
+  const hoje = new Date();
+  const mes = hoje.getMonth();
+  const ano = hoje.getFullYear();
+  const nomeMes = hoje.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+
+  // Filtra faltas do mês atual
+  const faltasMes = (S.historico||[]).filter(h=>{
+    if(h.tipo!=='falta')return false;
+    // tenta parsear data do lançamento
+    if(h.ts){
+      const d=new Date(h.ts);
+      return d.getMonth()===mes&&d.getFullYear()===ano;
+    }
+    return false;
+  });
+
+  // Agrupa por colaborador
+  const porColab = {};
+  faltasMes.forEach(h=>{
+    if(!porColab[h.colab])porColab[h.colab]={nome:h.colab,faltas:[],totalH:0};
+    porColab[h.colab].faltas.push(h);
+    porColab[h.colab].totalH+=Math.abs(h.delta||0);
+  });
+
+  // Monta HTML do relatório
+  const rows = Object.values(porColab).sort((a,b)=>b.totalH-a.totalH);
+
+  // Abre em nova janela
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Relatório de Faltas — ${nomeMes}</title>
+<style>
+  body{font-family:'Segoe UI',sans-serif;background:#f5f5f5;color:#111;padding:2rem;max-width:800px;margin:0 auto}
+  h1{font-size:22px;font-weight:700;margin-bottom:4px}
+  .sub{font-size:13px;color:#666;margin-bottom:2rem}
+  .card{background:#fff;border-radius:10px;padding:20px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+  .colab-nome{font-size:15px;font-weight:600;margin-bottom:10px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;padding:6px 10px;background:#f0f0f0;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#555}
+  td{padding:7px 10px;border-bottom:1px solid #f0f0f0}
+  .total{font-weight:600;color:#E8271A}
+  .empty{text-align:center;padding:3rem;color:#888;font-size:14px;background:#fff;border-radius:10px}
+  .header{display:flex;align-items:center;gap:12px;margin-bottom:2rem}
+  .logo{font-size:28px;font-weight:800;letter-spacing:-1px}
+  .logo span{color:#E8271A}
+  .resumo{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.5rem}
+  .met{background:#fff;border-radius:8px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .met-label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#888;margin-bottom:6px}
+  .met-val{font-size:22px;font-weight:700}
+  @media print{body{background:#fff}button{display:none}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">FIRMA<span>.</span></div>
+  <div><h1>Relatório de Faltas</h1><div class="sub">${nomeMes.charAt(0).toUpperCase()+nomeMes.slice(1)} · Gerado em ${new Date().toLocaleDateString('pt-BR')} · por ${S.users.find(u=>u.u===CU?.u)?.name||CU?.u||'—'}</div></div>
+</div>
+<div class="resumo">
+  <div class="met"><div class="met-label">Colaboradores com falta</div><div class="met-val">${rows.length}</div></div>
+  <div class="met"><div class="met-label">Total de ocorrências</div><div class="met-val">${faltasMes.length}</div></div>
+  <div class="met"><div class="met-label">Total de horas</div><div class="met-val" style="color:#E8271A">${faltasMes.reduce((a,h)=>a+Math.abs(h.delta||0),0).toFixed(1)}h</div></div>
+</div>
+${rows.length===0
+  ? '<div class="empty">✅ Nenhuma falta registrada neste mês</div>'
+  : rows.map(c=>`
+<div class="card">
+  <div class="colab-nome">${c.nome} <span style="font-size:12px;font-weight:400;color:#888">${c.faltas.length} ocorrência(s) · ${c.totalH.toFixed(1)}h descontadas</span></div>
+  <table>
+    <tr><th>Data do registro</th><th>Descrição</th><th>Horas descontadas</th><th>Gestor</th></tr>
+    ${c.faltas.map(f=>`<tr><td>${f.data}</td><td>${f.desc}</td><td class="total">-${Math.abs(f.delta||0).toFixed(1)}h</td><td>${f.gestor||'—'}</td></tr>`).join('')}
+  </table>
+</div>`).join('')}
+<div style="margin-top:2rem;text-align:right">
+  <button onclick="window.print()" style="padding:10px 20px;background:#E8271A;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">🖨️ Imprimir / Salvar PDF</button>
+</div>
+</body></html>`;
+
+  const win=window.open('','_blank');
+  win.document.write(html);
+  win.document.close();
+}
+
+function toggleFaltaEvOutro(){
+  const sel=document.getElementById('falta-ev-evento');
+  const wrap=document.getElementById('falta-ev-outro-wrap');
+  if(wrap) wrap.style.display=sel&&sel.value==='__outro__'?'block':'none';
+}
+
+function toggleFaltaEvOutro(){
+  const sel=document.getElementById('falta-ev-evento');
+  const wrap=document.getElementById('falta-ev-outro-wrap');
+  if(wrap) wrap.style.display=(sel&&sel.value==='__outro__')?'block':'none';
+}
+
+function registrarFaltaEvento(){
+  const nome=document.getElementById('falta-ev-colab').value;
+  const selEv=document.getElementById('falta-ev-evento');
+  const evento=(selEv.value==='__outro__'
+    ? (document.getElementById('falta-ev-outro')?.value||'').trim()
+    : selEv.value)||'';
+  const horas=parseFloat(document.getElementById('falta-ev-horas').value)||0;
+  if(!nome){toast('⚠️ Selecione o colaborador');return;}
+  if(!evento){toast('⚠️ Informe o nome do evento');return;}
+  if(horas<=0){toast('⚠️ Informe as horas a descontar');return;}
+  const c=S.colabs.find(x=>x.nome===nome);
+  if(!c)return;
+  c.horas=Math.round(((c.horas||0)-horas)*10)/10; // pode ficar negativo
+  c.faltas=(c.faltas||0)+1;
+  const entry={tipo:'falta',colab:nome,desc:`Falta no evento: ${evento}`,data:new Date().toLocaleDateString('pt-BR'),delta:-horas,gestor:CU?.name||'—',ts:Date.now()};
+  S.historico.push(entry);
+  salvarEstado();
+  toast(`❌ Falta de ${nome} registrada — ${horas.toFixed(1)}h descontadas. Saldo: ${c.horas.toFixed(1)}h`);
+  renderColabs();renderHist();
+  // Limpar campos
+  document.getElementById('falta-ev-evento').value='';
+  document.getElementById('falta-ev-horas').value='';
+}
+
+function registrarFaltaDia(){
+  const nome=document.getElementById('falta-dia-colab').value;
+  const data=document.getElementById('falta-dia-data').value;
+  const tipo=document.getElementById('falta-dia-tipo').value;
+  if(!nome){toast('⚠️ Selecione o colaborador');return;}
+  if(!data){toast('⚠️ Selecione a data');return;}
+  const horas=tipo==='meio'?(S.meio||4):(S.jorn||8);
+  const c=S.colabs.find(x=>x.nome===nome);
+  if(!c)return;
+  c.horas=Math.round(((c.horas||0)-horas)*10)/10; // pode ficar negativo
+  c.faltas=(c.faltas||0)+1;
+  const dataFmt=new Date(data+'T12:00:00').toLocaleDateString('pt-BR');
+  const entry={tipo:'falta',colab:nome,desc:`Falta: ${dataFmt} (${tipo==='meio'?'meio período':'dia inteiro'})`,data:new Date().toLocaleDateString('pt-BR'),delta:-horas,gestor:CU?.name||'—',ts:Date.now()};
+  S.historico.push(entry);
+  salvarEstado();
+  const aviso=c.horas<0?` ⚠️ Saldo negativo: ${c.horas.toFixed(1)}h`:'';
+  toast(`❌ Falta de ${nome} registrada — ${horas.toFixed(1)}h descontadas.${aviso}`);
+  renderColabs();renderHist();
 }
 
 function renderUsers(){
