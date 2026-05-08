@@ -334,9 +334,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bk);color:var(--wh);font-
               <input type="radio" name="eq-modo" value="arquivo" checked onchange="toggleEQModo()" style="accent-color:var(--red)"> Importar arquivo
             </label>
             <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;padding:8px 14px;border-radius:var(--r);border:.5px solid var(--br2);background:var(--bk3)">
-              <input type="radio" name="eq-modo" value="texto" onchange="toggleEQModo()" style="accent-color:var(--red)"> Colar nomes (texto)
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;padding:8px 14px;border-radius:var(--r);border:.5px solid var(--br2);background:var(--bk3)">
               <input type="radio" name="eq-modo" value="manual" onchange="toggleEQModo()" style="accent-color:var(--red)"> Adicionar manualmente
             </label>
           </div>
@@ -351,17 +348,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bk);color:var(--wh);font-
             </div>
           </div>
 
-          <!-- Modo colar texto -->
-          <div id="eq-texto-area" style="display:none">
-            <div class="card" style="margin-bottom:1.5rem">
-              <div class="ch"><span class="ct">Colar lista de nomes</span></div>
-              <div style="padding:16px">
-                <div style="font-size:12px;color:var(--wh3);margin-bottom:10px">Cole os nomes abaixo — um por linha. Funciona com texto copiado de Word, PDF, e-mail ou qualquer fonte.</div>
-                <textarea id="eq-texto" placeholder="Ana Lima&#10;Carlos Mota&#10;Beatriz Nunes&#10;..." style="width:100%;height:160px;padding:10px;border:.5px solid var(--br2);border-radius:var(--r);background:var(--bk3);color:var(--wh);font-size:13px;font-family:inherit;resize:vertical;line-height:1.6"></textarea>
-                <button class="btn btn-p btn-sm" onclick="handleEQTexto()" style="margin-top:10px">Processar lista</button>
-              </div>
-            </div>
-          </div>
+
 
           <!-- Modo manual com horas individuais -->
           <div id="eq-manual-area" style="display:none">
@@ -467,6 +454,34 @@ body{font-family:'DM Sans',sans-serif;background:var(--bk);color:var(--wh);font-
                 </select>
               </div>
               <button class="btn btn-p" onclick="registrarFaltaDia()" style="padding:9px 14px">Registrar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Atrasos -->
+        <div class="card">
+          <div class="ch"><span class="ct">⏰ Atraso em evento</span></div>
+          <div style="padding:16px">
+            <div style="font-size:12px;color:var(--wh3);margin-bottom:12px">Registre o atraso de um colaborador em um evento. As horas de atraso serão descontadas do saldo.</div>
+            <div style="display:grid;grid-template-columns:1fr 1.5fr 1fr 1fr auto;gap:12px;align-items:end;max-width:900px">
+              <div class="cf"><label>Colaborador</label>
+                <select id="atraso-colab" style="width:100%;padding:9px 11px;border:.5px solid var(--br2);border-radius:var(--r);background:var(--bk3);font-size:13px;font-family:inherit;color:var(--wh)"><option value="">Selecione...</option></select>
+              </div>
+              <div class="cf"><label>Evento</label>
+                <select id="atraso-evento" style="width:100%;padding:9px 11px;border:.5px solid var(--br2);border-radius:var(--r);background:var(--bk3);font-size:13px;font-family:inherit;color:var(--wh)" onchange="toggleAtrasoOutro()">
+                  <option value="">Selecione...</option>
+                </select>
+                <div id="atraso-outro-wrap" style="display:none;margin-top:6px">
+                  <input type="text" id="atraso-outro" placeholder="Nome do evento" style="width:100%;padding:9px 11px;border:.5px solid var(--br2);border-radius:var(--r);background:var(--bk3);font-size:13px;font-family:inherit;color:var(--wh)">
+                </div>
+              </div>
+              <div class="cf"><label>Data</label>
+                <input type="date" id="atraso-data" style="width:100%;padding:9px 11px;border:.5px solid var(--br2);border-radius:var(--r);background:var(--bk3);font-size:13px;font-family:inherit;color:var(--wh)">
+              </div>
+              <div class="cf"><label>Horas de atraso</label>
+                <input type="number" id="atraso-horas" placeholder="Ex: 1.5" min="0" step="0.5" style="width:100%;padding:9px 11px;border:.5px solid var(--br2);border-radius:var(--r);background:var(--bk3);font-size:13px;font-family:inherit;color:var(--wh)">
+              </div>
+              <button class="btn btn-p" onclick="registrarAtraso()" style="padding:9px 14px">Registrar</button>
             </div>
           </div>
         </div>
@@ -1283,7 +1298,6 @@ function confirmarTMManual(){
 function toggleEQModo(){
   const modo = document.querySelector('input[name="eq-modo"]:checked')?.value;
   document.getElementById('eq-arquivo-area').style.display = modo==='arquivo' ? 'block' : 'none';
-  document.getElementById('eq-texto-area').style.display   = modo==='texto'   ? 'block' : 'none';
   document.getElementById('eq-manual-area').style.display  = modo==='manual'  ? 'block' : 'none';
   // Popular datalist com colaboradores já cadastrados
   if(modo==='manual'){
@@ -1303,23 +1317,7 @@ function toggleEQModo(){
   }
 }
 
-// ── Equipe via texto colado ───────────────────────────
-function handleEQTexto(){
-  const raw = document.getElementById('eq-texto').value;
-  if(!raw.trim()){ toast('⚠️ Cole os nomes antes de processar'); return; }
-  const HEADERS = ['NOME','COLABORADOR','EQUIPE','PARTICIPANTE','TÉCNICO','TECNICO','FUNÇÃO','FUNCAO'];
-  const nomes = [], ignorados = [];
-  raw.split('\n').forEach(linha => {
-    const s = linha.trim();
-    if(!s || s.length < 3) return;
-    if(HEADERS.includes(s.toUpperCase())) return;
-    // Ignora freelancers
-    if(s.toUpperCase().includes('FREELANCER')){ ignorados.push(s); return; }
-    nomes.push(s);
-  });
-  if(!nomes.length){ toast('⚠️ Nenhum nome encontrado'); return; }
-  processarNomesEQ(nomes, ignorados, 'texto colado');
-}
+// handleEQTexto removido — opção de colar texto descontinuada
 
 // ── Processa nomes da equipe (comum a arquivo e texto) ──
 function processarNomesEQ(nomes, ignorados, fonte){
@@ -1461,7 +1459,7 @@ function confirmTM(){
 // ── Faltas ────────────────────────────────────────────
 function popularSelectsFalta(){
   // Colaboradores
-  ['falta-ev-colab','falta-dia-colab'].forEach(id=>{
+  ['falta-ev-colab','falta-dia-colab','atraso-colab'].forEach(id=>{
     const sel=document.getElementById(id);
     if(!sel)return;
     const val=sel.value;
@@ -1471,15 +1469,18 @@ function popularSelectsFalta(){
   });
   // Eventos — sem limitação de mês, todos os sincronizados
   const selEv=document.getElementById('falta-ev-evento');
-  if(selEv){
-    const val=selEv.value;
-    const opts = S.eventos.length
+  // Select de eventos — falta e atraso
+  ['falta-ev-evento','atraso-evento'].forEach(evId=>{
+    const selEvX=document.getElementById(evId);
+    if(!selEvX) return;
+    const valX=selEvX.value;
+    const optsX = S.eventos.length
       ? S.eventos.map(e=>`<option value="${e.nome}">${e.nome}${e.data?' ('+fmtD(e.data)+')':''}</option>`).join('')
       : '';
-    selEv.innerHTML='<option value="">Selecione o evento...</option>'+opts+
+    selEvX.innerHTML='<option value="">Selecione o evento...</option>'+optsX+
       '<option value="__outro__">— Outro (digitar)</option>';
-    if(val) selEv.value=val;
-  }
+    if(valX) selEvX.value=valX;
+  });
 }
 
 // ── Gerador de relatório de faltas ───────────────────
@@ -1602,6 +1603,47 @@ function registrarFaltaEvento(){
   // Limpar campos
   document.getElementById('falta-ev-evento').value='';
   document.getElementById('falta-ev-horas').value='';
+}
+
+function toggleAtrasoOutro(){
+  const sel = document.getElementById('atraso-evento');
+  const wrap = document.getElementById('atraso-outro-wrap');
+  if(wrap) wrap.style.display = (sel && sel.value==='__outro__') ? 'block' : 'none';
+}
+
+function registrarAtraso(){
+  const nome  = document.getElementById('atraso-colab').value;
+  const selEv = document.getElementById('atraso-evento');
+  const evento = selEv.value==='__outro__'
+    ? (document.getElementById('atraso-outro')?.value||'').trim()
+    : selEv.value;
+  const data   = document.getElementById('atraso-data').value;
+  const horas  = parseFloat(document.getElementById('atraso-horas').value)||0;
+  if(!nome){ toast('⚠️ Selecione o colaborador'); return; }
+  if(!evento){ toast('⚠️ Selecione o evento'); return; }
+  if(!data){ toast('⚠️ Informe a data'); return; }
+  if(horas<=0){ toast('⚠️ Informe as horas de atraso'); return; }
+  const c = S.colabs.find(x=>x.nome===nome);
+  if(!c) return;
+  c.horas = Math.round(((c.horas||0)-horas)*10)/10;
+  c.faltas = (c.faltas||0) + 1;
+  const dataFmt = new Date(data+'T12:00:00').toLocaleDateString('pt-BR');
+  const entry = {
+    tipo:'falta', colab:nome,
+    desc:`Atraso em: ${evento} (${dataFmt})`,
+    data: new Date().toLocaleDateString('pt-BR'),
+    delta: -horas,
+    gestor: CU?.name||'—',
+    ts: Date.now()
+  };
+  S.historico.push(entry);
+  salvarEstado();
+  const aviso = c.horas < 0 ? ` ⚠️ Saldo negativo: ${c.horas.toFixed(1)}h` : '';
+  toast(`⏰ Atraso de ${nome} registrado — ${horas.toFixed(1)}h descontadas.${aviso}`);
+  renderColabs(); renderHist();
+  // Limpar campos
+  document.getElementById('atraso-horas').value = '';
+  document.getElementById('atraso-data').value = '';
 }
 
 function registrarFaltaDia(){
