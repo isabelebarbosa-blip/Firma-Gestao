@@ -437,29 +437,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bk);color:var(--wh);font-
         </div>
 
         <div class="card">
-          <div class="ch"><span class="ct">📅 Falta no dia a dia</span></div>
-          <div style="padding:16px">
-            <div style="font-size:12px;color:var(--wh3);margin-bottom:12px">Registre a falta de um colaborador num dia específico. As horas da jornada serão descontadas — saldo pode ficar negativo.</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end;max-width:700px">
-              <div class="cf"><label>Colaborador</label>
-                <select id="falta-dia-colab" style="width:100%;padding:9px 11px;border:.5px solid var(--br2);border-radius:var(--r);background:var(--bk3);font-size:13px;font-family:inherit;color:var(--wh)"><option value="">Selecione...</option></select>
-              </div>
-              <div class="cf"><label>Data da falta</label>
-                <input type="date" id="falta-dia-data" style="width:100%;padding:9px 11px;border:.5px solid var(--br2);border-radius:var(--r);background:var(--bk3);font-size:13px;font-family:inherit;color:var(--wh)">
-              </div>
-              <div class="cf"><label>Tipo</label>
-                <select id="falta-dia-tipo" style="width:100%;padding:9px 11px;border:.5px solid var(--br2);border-radius:var(--r);background:var(--bk3);font-size:13px;font-family:inherit;color:var(--wh)">
-                  <option value="dia">Dia inteiro</option>
-                  <option value="meio">Meio período</option>
-                </select>
-              </div>
-              <button class="btn btn-p" onclick="registrarFaltaDia()" style="padding:9px 14px">Registrar</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Atrasos -->
-        <div class="card">
           <div class="ch"><span class="ct">⏰ Atraso em evento</span></div>
           <div style="padding:16px">
             <div style="font-size:12px;color:var(--wh3);margin-bottom:12px">Registre o atraso de um colaborador em um evento. As horas de atraso serão descontadas do saldo.</div>
@@ -482,6 +459,28 @@ body{font-family:'DM Sans',sans-serif;background:var(--bk);color:var(--wh);font-
                 <input type="number" id="atraso-horas" placeholder="Ex: 1.5" min="0" step="0.5" style="width:100%;padding:9px 11px;border:.5px solid var(--br2);border-radius:var(--r);background:var(--bk3);font-size:13px;font-family:inherit;color:var(--wh)">
               </div>
               <button class="btn btn-p" onclick="registrarAtraso()" style="padding:9px 14px">Registrar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="ch"><span class="ct">📅 Falta no dia a dia</span></div>
+          <div style="padding:16px">
+            <div style="font-size:12px;color:var(--wh3);margin-bottom:12px">Registre a falta de um colaborador num dia específico. As horas da jornada serão descontadas — saldo pode ficar negativo.</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end;max-width:700px">
+              <div class="cf"><label>Colaborador</label>
+                <select id="falta-dia-colab" style="width:100%;padding:9px 11px;border:.5px solid var(--br2);border-radius:var(--r);background:var(--bk3);font-size:13px;font-family:inherit;color:var(--wh)"><option value="">Selecione...</option></select>
+              </div>
+              <div class="cf"><label>Data da falta</label>
+                <input type="date" id="falta-dia-data" style="width:100%;padding:9px 11px;border:.5px solid var(--br2);border-radius:var(--r);background:var(--bk3);font-size:13px;font-family:inherit;color:var(--wh)">
+              </div>
+              <div class="cf"><label>Tipo</label>
+                <select id="falta-dia-tipo" style="width:100%;padding:9px 11px;border:.5px solid var(--br2);border-radius:var(--r);background:var(--bk3);font-size:13px;font-family:inherit;color:var(--wh)">
+                  <option value="dia">Dia inteiro</option>
+                  <option value="meio">Meio período</option>
+                </select>
+              </div>
+              <button class="btn btn-p" onclick="registrarFaltaDia()" style="padding:9px 14px">Registrar</button>
             </div>
           </div>
         </div>
@@ -1155,26 +1154,29 @@ async function nProxy(path, body={}) {
 
 async function sincNotion() {
   toast('🔄 Buscando dados do Notion...');
-  // Colaboradores
   const rc = await nProxy('get_colaboradores');
   if (rc?.colaboradores) {
+    const notionNomes = rc.colaboradores.map(c => c.nome);
+    const removidos = S.colabs.filter(c => !notionNomes.includes(c.nome));
+    if (removidos.length) S.colabs = S.colabs.filter(c => notionNomes.includes(c.nome));
     let novos = 0;
     for (const c of rc.colaboradores) {
-      if (!S.colabs.find(x => x.nome === c.nome)) {
-        S.colabs.push({ nome:c.nome, funcao:c.funcao||'—', dept:'Operacional', horas:0, ultima_folga:null });
-        novos++;
-      }
+      const ex = S.colabs.find(x => x.nome === c.nome);
+      if (!ex) { S.colabs.push({ nome:c.nome, funcao:c.funcao||'—', dept:c.dept||'Operacional', horas:0, ultima_folga:null, faltas:0 }); novos++; }
+      else { ex.funcao = c.funcao||ex.funcao; ex.dept = c.dept||ex.dept; }
     }
     salvarEstado();
     document.getElementById('n-st').textContent = '● Notion conectado';
     document.getElementById('n-st').className = 'npill np-ok';
-    toast(`✅ ${novos} novos colaboradores · ${rc.colaboradores.length} no total`);
+    let msg = `✅ ${rc.colaboradores.length} colaboradores ativos`;
+    if (novos) msg += ` · ${novos} novo(s)`;
+    if (removidos.length) msg += ` · ${removidos.length} inativo(s) removido(s)`;
+    toast(msg);
     renderColabs();
   } else {
     toast('❌ Erro ao buscar colaboradores. Verifique o NOTION_TOKEN no Netlify.');
     return;
   }
-  // Eventos
   const re = await nProxy('get_eventos');
   if (re?.eventos) {
     S.eventos = re.eventos;
