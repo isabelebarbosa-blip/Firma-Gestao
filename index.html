@@ -21,11 +21,11 @@
 body{font-family:'DM Sans',sans-serif;background:var(--bk);color:var(--wh);font-size:14px;min-height:100vh}
 
 /* LOGIN */
-#ls{min-height:100vh;display:flex;overflow:hidden}
-.ll{flex:1;display:flex;align-items:center;justify-content:center;padding:3rem;position:relative;z-index:2}
-.ll::before{content:'';position:absolute;inset:0;background-image:linear-gradient(var(--br) 1px,transparent 1px),linear-gradient(90deg,var(--br) 1px,transparent 1px);background-size:48px 48px}
+#ls{min-height:100vh;display:flex;overflow:hidden;align-items:stretch}
+.ll{flex:1;display:flex;align-items:center;justify-content:center;padding:4rem 5rem;position:relative;z-index:2;min-height:100vh}
+.ll::before{content:'';position:absolute;inset:0}
 .ll::after{content:'';position:absolute;top:-20%;left:-10%;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(232,39,26,.07) 0%,transparent 70%)}
-.lr{width:420px;flex-shrink:0;background:var(--bk2);border-left:.5px solid var(--br2);display:flex;align-items:center;justify-content:center;padding:2.5rem}
+.lr{width:440px;flex-shrink:0;background:var(--bk2);border-left:.5px solid var(--br2);display:flex;align-items:center;justify-content:center;padding:3rem 2.5rem;min-height:100vh}
 .bh{position:relative;z-index:1}
 .bw{font-family:'Syne',sans-serif;font-weight:800;font-size:76px;letter-spacing:-4px;line-height:1}
 .bw span{color:var(--red)}
@@ -187,6 +187,84 @@ body{font-family:'DM Sans',sans-serif;background:var(--bk);color:var(--wh);font-
 .pw-eye{position:absolute;right:10px;cursor:pointer;color:var(--wh3);font-size:14px;user-select:none;transition:color .15s}
 .pw-eye:hover{color:var(--wh)}
 @media(max-width:700px){.sb{display:none}.main{padding:1rem .75rem}.g6{grid-template-columns:2fr 1fr 1fr}.g6 .hide{display:none}}
+
+/* ── Transição suave entre temas ─────────────── */
+*{transition:background-color .2s,color .2s,border-color .2s}
+/* ── Tema claro ─────────────────────────────── */
+body.light{--bk:#F0EEE9;--bk2:#FFFFFF;--bk3:#F5F3EE;--bk4:#E8E6E1;--wh:#1A1917;--wh2:#3A3835;--wh3:#706E69;--br:rgba(0,0,0,.08);--br2:rgba(0,0,0,.15);--gbg:rgba(76,175,80,.1);--abg:rgba(245,158,11,.1);--bbg:rgba(96,165,250,.1);background:#F0EEE9!important;color:#1A1917!important}
+body.light #app,body.light #ls{background:#F0EEE9}
+body.light .tb{background:#fff!important;border-bottom-color:rgba(0,0,0,.08)!important}
+body.light .tlog,body.light .tmod{color:#1A1917!important}
+body.light .tdiv{background:rgba(0,0,0,.1)!important}
+body.light .obtn{color:#706E69!important;border-color:rgba(0,0,0,.1)!important}
+body.light .obtn:hover{background:#F5F3EE!important}
+body.light .upill{background:#F5F3EE!important;color:#1A1917!important}
+body.light .npill{background:#F5F3EE!important}
+body.light .np-ok{background:rgba(76,175,80,.15)!important;color:#2e6b0c!important}
+body.light .sb{background:#fff!important;border-right-color:rgba(0,0,0,.08)!important}
+body.light .ni{color:#706E69!important}
+body.light .ni:hover{background:#F5F3EE!important;color:#1A1917!important}
+body.light .ni.active{background:#F0EEE9!important;color:#1A1917!important}
+body.light .ns{color:#A09E98!important}
+body.light .main,body.light .layout{background:#F0EEE9!important}
+body.light .pt{color:#1A1917!important}
+body.light .pst{color:#706E69!important}
+body.light .met{background:#fff!important;border-color:rgba(0,0,0,.08)!important}
+body.light .ml{color:#706E69!important}
+body.light .mv{color:#1A1917!important}
+body.light .ms{color:#706E69!important}
+body.light .card{background:#fff!important;border-color:rgba(0,0,0,.08)!important}
+body.light .ch{border-bottom-color:rgba(0,0,0,.08)!important}
+body.light .ct{color:#706E69!important}
+body.light .th{color:#706E69!important;border-bottom-color:rgba(0,0,0,.06)!important}
+body.light .tr{border-bottom-color:rgba(0,0,0,.06)!important;color:#1A1917!important}
+body.light .tr:hover{background:#F5F3EE!important}
+body.light .cfg{background:#fff!important;border-color:rgba(0,0,0,.08)!important}
+body.light .cgt{color:#1A1917!important}
+body.light .cf label{color:#706E69!important}
+body.light .cf input,body.light select,body.light textarea,body.light .ur input{background:#F5F3EE!important;color:#1A1917!important;border-color:rgba(0,0,0,.12)!important}
+body.light .cfh{color:#706E69!important}
+body.light .upz{background:#fff!important;border-color:rgba(0,0,0,.15)!important;color:#1A1917!important}
+body.light .upz:hover{background:#F5F3EE!important;border-color:var(--red)!important}
+body.light .btn{background:#F5F3EE!important;border-color:rgba(0,0,0,.12)!important;color:#1A1917!important}
+body.light .btn:hover{background:#E8E6E1!important}
+body.light .btn-p{background:var(--red)!important;color:#fff!important;border-color:var(--red)!important}
+body.light .itab{color:#706E69!important}
+body.light .itab.active{color:#1A1917!important;border-bottom-color:var(--red)!important}
+body.light .hi{background:#fff!important;border-color:rgba(0,0,0,.08)!important;color:#1A1917!important}
+body.light .hw{background:rgba(96,165,250,.1)!important}
+body.light .hf{background:rgba(76,175,80,.1)!important}
+body.light .hit{color:#1A1917!important}
+body.light .him{color:#706E69!important}
+body.light .dp{background:rgba(96,165,250,.1)!important;color:#1a5fa5!important}
+body.light .dn{background:rgba(232,39,26,.08)!important;color:#b01a10!important}
+body.light .dz{background:#F5F3EE!important;color:#706E69!important}
+body.light .fc{background:#fff!important;border-color:rgba(232,39,26,.25)!important}
+body.light .fd{border-bottom-color:rgba(0,0,0,.06)!important;color:#1A1917!important}
+body.light .b-r{background:rgba(232,39,26,.08)!important;color:#b01a10!important}
+body.light .b-a{background:rgba(245,158,11,.1)!important;color:#854F0B!important}
+body.light .b-g{background:rgba(76,175,80,.1)!important;color:#2e6b0c!important}
+body.light .b-b{background:rgba(96,165,250,.1)!important;color:#1a5fa5!important}
+body.light .b-x{background:#E8E6E1!important;color:#706E69!important}
+body.light .b-p{background:rgba(130,100,200,.1)!important;color:#5b3ea6!important}
+body.light .bar-bg{background:rgba(0,0,0,.08)!important}
+body.light .cc2.c-e{background:#E8E6E1!important}
+body.light .cc2.c-h{background:rgba(232,39,26,.08)!important;border-color:rgba(232,39,26,.2)!important}
+body.light .cal-dn{color:#706E69!important}
+body.light .cc2n{color:#1A1917!important}
+body.light .modal{background:#fff!important;border-color:rgba(0,0,0,.12)!important;color:#1A1917!important}
+body.light .mt2{color:#1A1917!important}
+body.light .ms2{color:#706E69!important}
+body.light .toast{background:#fff!important;color:#1A1917!important;border-color:rgba(0,0,0,.12)!important}
+body.light .empty{color:#706E69!important}
+body.light .ll{background:#F0EEE9}
+body.light .lr{background:#fff;border-left-color:rgba(0,0,0,.1)}
+body.light .bd,body.light .bt2{color:#706E69}
+body.light .lf input{background:#F5F3EE;color:#1A1917;border-color:rgba(0,0,0,.15)}
+body.light .lhint{color:#706E69}
+body.light .lhint code{background:#F5F3EE;color:#3A3835}
+body.light .ninfo{background:rgba(96,165,250,.08)!important;color:#1a5fa5!important}
+body.light .prev-box{background:#F5F3EE!important;color:#1A1917!important}
 </style>
 </head>
 <body>
@@ -194,10 +272,20 @@ body{font-family:'DM Sans',sans-serif;background:var(--bk);color:var(--wh);font-
 <div id="ls">
   <div class="ll">
     <div class="bh">
-      <div class="bw">FIRMA<span>.</span></div>
-      <div class="bt2">Produções &amp; Eventos</div>
+      <div style="margin-bottom:28px">
+        <svg viewBox="0 0 400 140" xmlns="http://www.w3.org/2000/svg" style="width:300px">
+          <!-- Ponto vermelho no início, alinhado ao topo do F -->
+          <circle cx="14" cy="18" r="11" fill="#E8271A"/>
+          <!-- FiRMA todo junto -->
+          <text x="32" y="100" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="100" fill="white" letter-spacing="-2">FiRMA</text>
+          <!-- PROD. menor, canto inferior direito -->
+          <text x="240" y="128" font-family="Arial,sans-serif" font-weight="300" font-size="18" fill="white" letter-spacing="5">PROD</text>
+          <!-- Triângulo play no lugar do ponto do PROD. -->
+          <polygon points="325,110 325,129 338,120" fill="#E8271A"/>
+        </svg>
+      </div>
       <div class="brl"></div>
-      <div class="bd">Sistema de gestão operacional — gestão operacional, folgas e time.</div>
+      <div class="bd">Sistema de gestão operacional — horas extras, folgas e time.</div>
     </div>
   </div>
   <div class="lr">
@@ -216,12 +304,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bk);color:var(--wh);font-
 <div id="app">
   <div class="tb">
     <div class="tbl">
-      <div class="tlog">FIRMA<span>.</span></div>
+      <img src="data:image/webp;base64,UklGRtYEAABXRUJQVlA4WAoAAAAIAAAA/wAA/wAAVlA4IPYDAAAwJgCdASoAAQABAAAAJaW7hdKEe5C+b/hf+HPOGbB9mv1yxAL6B+Kv8A3gD+Qfjd/AOEB/AP4B/YOAA/SDgAP079GP/Ae4B+t3+q9wD+JfyzVsvC3TQ/C/9juZAyb32b8jtsA/ED4E/1D8Tfw3zGH+M/JnVHf7r+RWuV/zn4c+8R/R/ar7ifnT/W/kZ9Av6Yf3P8sf7F/8/BR6FP6gJp8yeNNomNNomNNomNNomNNomNNomNNomNNomNNZEwQPLENfgljcdZPGnLBKi30RxIu/3Wx11/1wXlr1BtxzXh0TUFBL4FGCN5btox9Yo0bZM8cI7V6KdtGPmt8Yb9sgXy697DgyeOTTSV2gyeNNtEHbRMabRKhk2wyQsKVNomNNomNNomNNomNNomNNomNNomNNomNNomNNomMsAAD+//vt2oACu/If3/RL95LgQcMyCpvyQUu8tqT3Saah/zZBcUyraHUBzPRA/AUlHUuRR41zdgwx0ff38/vPx3/Iy5z6dr/Ts/1wjf65djp2EZ0PrO+lteQFTpjtyq/2crwVGb3Es60TVJSVjc1AD/9eBecn+zveVTZMuoL7DmYcbbknCmwRunHie9yIOYA2l06qiMXpcHTouq2C7fyH/zS5+FOsN0/Pjjn7jUvgp2j9RrVDozx5xV7HU2ULtn0YuTqTmnroJy0TmerZcMm/EsT2038hPmAu3ib26EsL2Fe7UIFWX8+kvfP4JyaIcZYAwWufe1iHroQxL/xjHNcL0694xYyYN0A6mShMmnzlPHp18jUQL6vrLHTYVJPrfAu1OfgSe4DC9QG9D6HbqPnqo7KMSyXt9wZ48wTopuBLNGzw3/I6qBushbrDy6fzZdl6dGqzpqT0HJuzhiYYswE/sHyJ+caL1ZEnzQ6l2A74YJS6HPj60uVCjG9pBovx7ldJdv1e3nwayVs2E/mb8n1caO8T1jazt5HFjClXfW6/vZV//VJ+rj0+7tz6km6k12xJLkcNnQz9CCQw3qESb+RISeYWJaRl4EchwlJuCXXTb6TbZ1ZHOd/73wD2ixniRIZOPDuetzLbvJZGXY0QFZLWYsIjawn+THJg/hoLl1W486SnKun1x2/wvCc8P4bBN+B2eoXPuP4D+lsdZYp0XIx7jlUbt9aBu/1Yvj9f7O1VzOQ5V3nII3to3akJ3T69S8Vlkp96Yhsv/XWAZX5p/C7IBw6cLC2goA2/CQP5FocIx/WMv9RwjSdJ6yYnW+qkx+52Ik1FQmg98hug2Hiq/+t3XgBmvzDTSRmeSP5Xpv7X/R93EmituT/wt//aENe/6786JpRyVjFUB19zqWDMp4X19jVps3DJtQeB4AAAAABFWElGugAAAEV4aWYAAElJKgAIAAAABgASAQMAAQAAAAEAAAAaAQUAAQAAAFYAAAAbAQUAAQAAAF4AAAAoAQMAAQAAAAIAAAATAgMAAQAAAAEAAABphwQAAQAAAGYAAAAAAAAASAAAAAEAAABIAAAAAQAAAAYAAJAHAAQAAAAwMjEwAZEHAAQAAAABAgMAAKAHAAQAAAAwMTAwAaADAAEAAAD//wAAAqAEAAEAAAAAAQAAA6AEAAEAAAAAAQAAAAAAAA==" alt="Firma" style="height:30px;width:30px;border-radius:6px;object-fit:cover">
       <div class="tdiv"></div>
       <div class="tmod">Gestão Operacional</div>
     </div>
     <div class="tbr">
       <span class="npill np-off" id="n-st">● Notion</span>
+      <button class="obtn" onclick="toggleTema()" id="btn-tema" title="Alternar tema">🌙</button>
       <div class="upill"><div class="uav" id="u-av">A</div><span id="u-lb">—</span></div>
       <button class="obtn" onclick="doLogout()">Sair</button>
     </div>
@@ -254,7 +343,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bk);color:var(--wh);font-
         <div class="mets">
           <div class="met"><div class="ml">Colaboradores</div><div class="mv" id="m-tot">—</div><div class="ms">colaboradores ativos</div></div>
           <div class="met"><div class="ml">Precisam folgar</div><div class="mv mv-w" id="m-prec">—</div><div class="ms" id="ms-lim">≥ limite urgente</div></div>
-          <div class="met"><div class="ml">Banco total</div><div class="mv" id="m-banco">—</div><div class="ms">saldo acumulado</div></div>
+          <div class="met"><div class="ml">Saldo de Extras</div><div class="mv" id="m-banco">—</div><div class="ms">saldo de extras</div></div>
           <div class="met"><div class="ml">Próximo evento</div><div class="mv mv-o" id="m-prox" style="font-size:16px">—</div><div class="ms" id="m-prox-n">—</div></div>
         </div>
         <div class="card">
@@ -374,7 +463,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bk);color:var(--wh);font-
                     <input type="date" id="eq-manual-data" style="width:100%;padding:9px 11px;border:.5px solid var(--br2);border-radius:var(--r);background:var(--bk3);font-size:13px;font-family:inherit;color:var(--wh)">
                   </div>
                   <div class="cf">
-                    <label>Horas trabalhadas</label>
+                    <label>Horas extras</label>
                     <input type="number" id="eq-manual-horas-ind" placeholder="Ex: 12.5" min="0" step="0.5">
                   </div>
                   <button class="btn btn-p" onclick="adicionarColabManual()" style="padding:9px 14px;align-self:end">+ Adicionar</button>
@@ -652,6 +741,23 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Enter'&&document.getElementById('eq-manual-nome')===document.activeElement){
     adicionarColabManual(); return;
   }if(e.key==='Enter'&&document.getElementById('ls').style.display!=='none')doLogin();});
+// ── Tema claro / escuro ──────────────────────────────
+function toggleTema(){
+  const isLight = document.body.classList.toggle('light');
+  document.getElementById('btn-tema').textContent = isLight ? '☀️' : '🌙';
+  localStorage.setItem('firma_tema', isLight ? 'light' : 'dark');
+}
+function aplicarTema(){
+  const tema = localStorage.getItem('firma_tema');
+  if(tema === 'light'){
+    document.body.classList.add('light');
+    const btn = document.getElementById('btn-tema');
+    if(btn) btn.textContent = '☀️';
+  }
+}
+// Aplicar tema salvo ao carregar
+aplicarTema();
+
 function doLogout(){CU=null;document.getElementById('app').style.display='none';document.getElementById('ls').style.display='flex';document.getElementById('l-p').value='';}
 
 // ── Nav ──────────────────────────────────────────────
@@ -1019,7 +1125,7 @@ function renderFolgas(){
     return`<div class="fc">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
         <div class="av" style="background:${bg};color:${fg};width:32px;height:32px">${ini(c.nome)}</div>
-        <div><div style="font-size:13px;font-weight:500">${c.nome}</div><div style="font-size:11px;color:var(--wh3)">${(c.horas||0).toFixed(1)}h acumuladas</div></div>
+        <div><div style="font-size:13px;font-weight:500">${c.nome}</div><div style="font-size:11px;color:var(--wh3)">${(c.horas||0).toFixed(1)}h de extras</div></div>
       </div>
       <div style="margin-bottom:10px">${mb.map(d=>`<div class="fd"><span style="color:var(--wh3)">${d.label}</span><span class="badge b-g">Sem eventos</span></div>`).join('')}</div>
       <button class="btn btn-p" style="width:100%;padding:8px;font-size:12px" onclick="openModal(${S.colabs.indexOf(c)},'${mb[0].label}')">Registrar folga</button>
@@ -1171,16 +1277,14 @@ async function sincNotion() {
     let msg = `✅ ${rc.colaboradores.length} colaboradores ativos`;
     if (novos) msg += ` · ${novos} novo(s)`;
     if (removidos.length) msg += ` · ${removidos.length} inativo(s) removido(s)`;
-    toast(msg);
-    renderColabs();
+    toast(msg); renderColabs();
   } else {
     toast('❌ Erro ao buscar colaboradores. Verifique o NOTION_TOKEN no Netlify.');
     return;
   }
   const re = await nProxy('get_eventos');
   if (re?.eventos) {
-    S.eventos = re.eventos;
-    salvarEstado();
+    S.eventos = re.eventos; salvarEstado();
     renderEventos(); renderFolgas(); renderCal(); updMets();
     toast(`✅ ${S.eventos.length} eventos carregados do Notion!`);
   }
@@ -1364,7 +1468,7 @@ function adicionarColabManual(){
   const evento = selEv ? (selEv.value||'') : '';
   const data   = document.getElementById('eq-manual-data')?.value||'';
   if(!nome||nome==='Selecione...'){ toast('⚠️ Selecione o colaborador'); return; }
-  if(horas<=0){ toast('⚠️ Informe as horas trabalhadas'); return; }
+  if(horas<=0){ toast('⚠️ Informe as horas extras'); return; }
   if(_eqManualList.find(x=>x.nome===nome)){
     toast('⚠️ Colaborador já adicionado na lista'); return;
   }
@@ -1404,13 +1508,13 @@ async function confirmarEQManual(){
     // Adiciona as horas diretamente (sem T&M pendente)
     c.horas = Math.round(((c.horas||0)+item.horas)*10)/10;
     const dataFmt = item.data ? new Date(item.data+'T12:00:00').toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR');
-    const entry = {tipo:'work', colab:item.nome, desc:`${item.evento||'Lançamento manual'} — ${item.horas.toFixed(1)}h`, data:dataFmt, delta:item.horas, gestor:CU?.name||'—', ts:Date.now()};
+    const entry = {tipo:'work', colab:item.nome, desc:`Extras: ${item.evento||'lançamento manual'} — ${item.horas.toFixed(1)}h`, data:dataFmt, delta:item.horas, gestor:CU?.name||'—', ts:Date.now()};
     S.historico.push(entry);
     if(S.notionTk||S.whColabs) sincLancamento(entry);
   }
   salvarEstado();
   addImpRow('imp-eq', `${_eqManualList.length} pessoas · lançamento manual · ${novos} novas`, '👥');
-  toast(`✅ ${_eqManualList.length} colaboradores com horas lançadas!`);
+  toast(`✅ ${_eqManualList.length} colaboradores colaboradores ativos!`);
   _eqManualList=[];
   renderEQManualLista();
   renderColabs(); renderFolgas();
@@ -1444,7 +1548,7 @@ function confirmTM(){
     let c=S.colabs.find(x=>x.nome.toLowerCase()===n.toLowerCase());
     if(!c){c={nome:n,funcao:'—',dept:'Operacional',horas:0,ultima_folga:null,faltas:0};S.colabs.push(c);}
     c.horas=Math.round(((c.horas||0)+horas)*10)/10;
-    const entry={tipo:'work',colab:n,desc:`${tm.eventoNome} — ${horas.toFixed(1)}h`,data:new Date().toLocaleDateString('pt-BR'),delta:horas,gestor:CU?.name||'—',ts:Date.now()};
+    const entry={tipo:'work',colab:n,desc:`Extras: ${tm.eventoNome} — ${horas.toFixed(1)}h`,data:new Date().toLocaleDateString('pt-BR'),delta:horas,gestor:CU?.name||'—',ts:Date.now()};
     S.historico.push(entry);
     if(S.notionTk||S.whColabs)sincLancamento(entry);
   });
@@ -1744,7 +1848,7 @@ function gerarRelatorioIndividual(){
 
   html += `<div class="resumo">
     <div class="met"><div class="met-label">Saldo atual</div><div class="met-val" style="color:${(colab.horas||0)<0?'#E8271A':'#27ae60'}">${(colab.horas||0).toFixed(1)}h</div></div>
-    <div class="met"><div class="met-label">Horas trabalhadas</div><div class="met-val">${horasTrab.toFixed(1)}h</div></div>
+    <div class="met"><div class="met-label">Horas extras</div><div class="met-val">${horasTrab.toFixed(1)}h</div></div>
     <div class="met"><div class="met-label">Folgas tiradas</div><div class="met-val">${horasFolga.toFixed(1)}h</div></div>
     <div class="met"><div class="met-label">Faltas</div><div class="met-val" style="color:${horasFalta>0?'#E8271A':'inherit'}">${horasFalta.toFixed(1)}h</div></div>
     <div class="met"><div class="met-label">Eventos</div><div class="met-val">${eventos.length}</div></div>
@@ -1903,7 +2007,7 @@ function gerarRelatorioCarga(){
     html += `<div class="empty">Nenhum lançamento de trabalho no período</div>`;
   } else {
     html += `<div class="card"><div class="card-title">Ranking de carga — ${periodoLabel}</div><table>
-      <tr><th>#</th><th>Colaborador</th><th>Eventos</th><th>Horas trabalhadas</th><th>vs. Média</th><th>Saldo atual</th></tr>`;
+      <tr><th>#</th><th>Colaborador</th><th>Eventos</th><th>Horas extras</th><th>vs. Média</th><th>Saldo atual</th></tr>`;
 
     lista.forEach((c,i)=>{
       const colab = S.colabs.find(x=>x.nome===c.nome);
